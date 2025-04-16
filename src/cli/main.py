@@ -38,6 +38,10 @@ def main():
         raw_data = parse_apple_health_export("data/export.xml")
         daily_df = clean_and_aggregate(raw_data)
 
+        if daily_df.empty:
+            print("Error: No valid daily data found. Check your Health export for completeness.")
+            return
+
         model_df = preprocess_for_modeling(daily_df)
         prediction_df = train_and_predict(model_df)
 
