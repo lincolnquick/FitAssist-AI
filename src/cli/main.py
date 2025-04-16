@@ -36,10 +36,9 @@ def main():
 
     try:
         raw_data = parse_apple_health_export("data/export.xml")
-        parsed_records = raw_data["data"]
         weight_unit = raw_data["weight_unit"]
 
-        daily_df = clean_and_aggregate(parsed_records, weight_unit=weight_unit)
+        daily_df = clean_and_aggregate(raw_data["data"], weight_unit=weight_unit)
 
         if daily_df.empty:
             print("Error: No valid daily data found. Check your Health export for completeness.")
@@ -48,7 +47,10 @@ def main():
         model_df = preprocess_for_modeling(daily_df)
         prediction_df = train_and_predict(model_df)
 
-        plot_predictions(prediction_df)
+        print("\n--- Daily Calorie Sample ---")
+        print(daily_df[["CaloriesIn", "CaloriesOut", "NetCalories"]].describe())
+
+        plot_predictions(daily_df, prediction_df)
 
         display_forecast_summary(prediction_df, daily_df)
 

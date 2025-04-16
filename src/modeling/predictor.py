@@ -33,6 +33,12 @@ def preprocess_for_modeling(df: pd.DataFrame) -> pd.DataFrame:
         return None
 
     df = df.copy()
+    # Ensure 'date' column is datetime
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+
+    # Drop any rows where date conversion failed
+    df = df.dropna(subset=["date"])
+
     df["DaysFromStart"] = (df["date"] - df["date"].min()).dt.days
 
     # Check for large gaps in data
@@ -42,47 +48,70 @@ def preprocess_for_modeling(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-
 def train_and_predict(df: pd.DataFrame) -> pd.DataFrame:
-    logger.info("Training linear regression model...")
-
-    if df is None or df.empty:
+    """
+    Trains a simple linear regression model to predict future weight based on caloric deficit trends.
+    Predicts weight for 30, 60, and 90 days into the future.
+    """
+    if df.empty:
         logger.error("Cannot train model: DataFrame is empty or None.")
         return None
 
-    model = LinearRegression()
+    logger.info("Training linear regression model...")
+
+    # Use days-from-start as time axis
+    df = df.copy()
+    df["DaysFromStart"] = (df["date"] - df["date"].min()).dt.days
+    df = df.dropna(subset=["Weight", "DaysFromStart"])
+
+    # Train model
     X = df[["DaysFromStart"]]
     y = df["Weight"]
-
+    model = LinearRegression()
     model.fit(X, y)
+
     logger.info("Model training complete.")
 
-    # Predict next 90 days
+    # Predict future weights for 30, 60, and 90 days into the future
     last_day = df["DaysFromStart"].max()
-    forecast_days = [30, 60, 90]
-    future_days = [last_day + d for d in forecast_days]
-
-    future_dates = [df["date"].max() + timedelta(days=d) for d in forecast_days]
-    predictions = model.predict(np.array(future_days).reshape(-1, 1))
+    last_date = df["date"].max()
+    future_days = [30, 60, 90]
+    future_days_absolute = [last_day + d for d in future_days]
+    X_future = pd.DataFrame(future_days_absolute, columns=["DaysFromStart"])
+    predictions = model.predict(X_future)
 
     prediction_df = pd.DataFrame({
-        "Date": future_dates,
-        "DaysFromToday": forecast_days,
+        "DaysFromToday": future_days,
         "PredictedWeightKg": predictions,
-        "PredictedWeightLbs": predictions * KG_TO_LBS
     })
+    prediction_df["PredictedWeightLbs"] = prediction_df["PredictedWeightKg"] * KG_TO_LBS
+    prediction_df["date"] = last_date + pd.to_timedelta(prediction_df["DaysFromToday"], unit="D")
 
     return prediction_df
 
 
 def plot_predictions(df: pd.DataFrame, prediction_df: pd.DataFrame):
-    if df is None or df.empty or prediction_df is None:
+    if df is None or df.empty or prediction_df is None or prediction_df.empty:
         logger.error("Cannot plot predictions: missing or invalid data.")
         return
 
+    # Rename any column that looks like a date column
+    for col in df.columns:
+        if col.lower() == "date":
+            df.rename(columns={col: "date"}, inplace=True)
+            break
+    for col in prediction_df.columns:
+        if col.lower() == "date":
+            prediction_df.rename(columns={col: "date"}, inplace=True)
+            break
+
+    print("Plotting with columns:")
+    print("df:", df.columns.tolist())
+    print("prediction_df:", prediction_df.columns.tolist())
+
     plt.figure(figsize=(10, 6))
     plt.plot(df["date"], df["Weight"], label="Historical Weight", color="blue", marker="o", markersize=3)
-    plt.plot(prediction_df["Date"], prediction_df["PredictedWeightKg"], label="Predicted Weight", color="red", linestyle="--", marker="x", markersize=5)
+    plt.plot(prediction_df["date"], prediction_df["PredictedWeightKg"], label="Predicted Weight", color="red", linestyle="--", marker="x", markersize=5)
 
     plt.xlabel("Date")
     plt.ylabel("Weight (kg)")

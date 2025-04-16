@@ -14,7 +14,7 @@ def evaluate_goal(df: pd.DataFrame, goal_weight_kg: float, goal_date: datetime.d
     Compares user goal to predicted weight.
     Assumes df has 'Date', 'PredictedWeight', and 'PredictedWeightLbs'.
     """
-    goal_day = df[df["Date"] == goal_date]
+    goal_day = df[df["date"] == goal_date]
 
     if goal_day.empty:
         print("Goal date is outside of prediction range.")

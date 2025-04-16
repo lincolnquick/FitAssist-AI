@@ -4,20 +4,35 @@ This file stores required fields, safety thresholds, and other tunable values
 used throughout the pipeline.
 """
 
-# Required metric types parsed from Apple Health data
+# Mapping from HealthKit type to internal label
 REQUIRED_METRICS = {
     "HKQuantityTypeIdentifierBodyMass": "Weight",
     "HKQuantityTypeIdentifierDietaryEnergyConsumed": "CaloriesIn",
-    "HKQuantityTypeIdentifierActiveEnergyBurned": "ActiveCaloriesOut",
-    "HKQuantityTypeIdentifierBasalEnergyBurned": "BasalCaloriesOut"
+    "HKQuantityTypeIdentifierActiveEnergyBurned": "CaloriesOut",
 }
 
-# Optional metrics that may be useful for future modeling or analysis
 OPTIONAL_METRICS = {
+    "HKQuantityTypeIdentifierBasalEnergyBurned": "BasalCaloriesOut",
     "HKQuantityTypeIdentifierBodyFatPercentage": "BodyFat",
     "HKQuantityTypeIdentifierLeanBodyMass": "LeanBodyMass",
     "HKQuantityTypeIdentifierDistanceWalkingRunning": "DistanceWalkingRunning",
-    "HKQuantityTypeIdentifierStepCount": "StepCount"
+    "HKQuantityTypeIdentifierStepCount": "StepCount",
+}
+
+# Metrics that should be summed over the day
+CUMULATIVE_METRICS = {
+    "CaloriesIn",
+    "CaloriesOut",
+    "BasalCaloriesOut",
+    "StepCount",
+    "DistanceWalkingRunning"
+}
+
+# Metrics that should be averaged per day
+AVERAGED_METRICS = {
+    "Weight",
+    "BodyFat",
+    "LeanBodyMass"
 }
 
 # Required columns in final DataFrame for modeling
@@ -49,3 +64,4 @@ SAFE_MAX_WEIGHT_GAIN_RATE = 2.0  # lbs/week
 # Unit conversions
 LBS_TO_KG = 0.453592
 KG_TO_LBS = 2.20462
+M_TO_KM = 0.001
