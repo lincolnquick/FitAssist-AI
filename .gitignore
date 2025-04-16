@@ -1,0 +1,26 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# macOS system files
+.DS_Store
+
+# Virtual environment
+.env/
+venv/
+ENV/
+env.bak/
+*.env
+
+# Apple Health exports (private)
+data/*.xml
+data/*.zip
+
+# Jupyter checkpoints (if added)
+*.ipynb_checkpoints
+
+# Logs or temporary files
+*.log
+*.tmp
