@@ -30,7 +30,7 @@ def test_parse_apple_health_export():
     assert "HKQuantityTypeIdentifierBodyMass" in data, "Missing BodyMass record."
     assert weight_unit in {"kg", "lb"}, "Unexpected weight unit."
 
-    logging.info("✅ test_parse_apple_health_export passed with unit: %s", weight_unit)
+    logging.info("test_parse_apple_health_export passed with unit: %s", weight_unit)
 
 @pytest.mark.order(2)
 def test_clean_and_aggregate():
@@ -44,5 +44,5 @@ def test_clean_and_aggregate():
     assert "Weight" in df.columns, "Missing 'Weight' column."
     assert df["Weight"].dtype in ["float64", "float32"], "Weight column should be numeric."
 
-    logging.info("✅ test_clean_and_aggregate passed with %d rows", len(df))
+    logging.info("test_clean_and_aggregate passed with %d rows", len(df))
     logging.info("Sample data:\n%s", df.head().to_string(index=False))
