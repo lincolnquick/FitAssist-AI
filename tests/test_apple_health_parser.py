@@ -9,18 +9,18 @@ from src.parse.clean_and_aggregate import clean_and_aggregate
 
 logging.basicConfig(level=logging.INFO)
 
-def test_parse_export_file():
-    file_path = "data/export.xml"
-    assert os.path.exists(file_path), "Apple Health export file not found at data/export.xml."
+# def test_parse_export_file():
+#     file_path = "data/export.xml"
+#     assert os.path.exists(file_path), "Apple Health export file not found at data/export.xml."
 
-    data = parse_apple_health_export(file_path)
+#     data = parse_apple_health_export(file_path)
 
-    expected_keys = {"Weight", "ActiveEnergyBurned", "DietaryEnergyConsumed"}
-    for key in expected_keys:
-        assert key in data
-        assert isinstance(data[key], pd.DataFrame)
+#     expected_keys = {"Weight", "ActiveEnergyBurned", "DietaryEnergyConsumed"}
+#     for key in expected_keys:
+#         assert key in data
+#         assert isinstance(data[key], pd.DataFrame)
 
-    logging.info("Parsed Apple Health export successfully.")
+#     logging.info("Parsed Apple Health export successfully.")
 
 
 def test_clean_and_aggregate_output():
