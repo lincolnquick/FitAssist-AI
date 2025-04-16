@@ -38,7 +38,7 @@ def inspect_export(xml_path: str, output_path: str = "output/record_summary.txt"
                 seen_types.add(r_type)
 
             count += 1
-            if count % 100000 == 0:
+            if count % 1_000_000 == 0:
                 logging.info(f"Parsed {count:,} records...")
 
             elem.clear()  # free memory

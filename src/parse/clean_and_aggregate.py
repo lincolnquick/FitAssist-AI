@@ -1,40 +1,58 @@
-# src/parse/clean_and_aggregate.py
-
 import pandas as pd
+from collections import defaultdict
 import logging
-from typing import Dict
+from typing import Dict, List
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
     datefmt="%H:%M:%S"
 )
 
-def clean_and_aggregate(records: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+def clean_and_aggregate(parsed_data: Dict[str, List[Dict]]) -> pd.DataFrame:
+    """
+    Cleans and aggregates parsed Apple Health data by date.
+    
+    Args:
+        parsed_data (Dict): Dictionary of lists keyed by Apple Health record type.
+    
+    Returns:
+        pd.DataFrame: Aggregated daily metrics with user-friendly column names.
+    """
     logging.info("Starting data cleaning and aggregation...")
 
-    # Standardize and process each dataframe
-    for key in records:
-        df = records[key].copy()
-        if df.empty:
-            logging.warning(f"No data found for {key}")
+    # Map Apple Health record types to output column names
+    type_to_column = {
+        'HKQuantityTypeIdentifierBodyMass': 'Weight',  # in kg
+        'HKQuantityTypeIdentifierDietaryEnergyConsumed': 'CaloriesIn',
+        'HKQuantityTypeIdentifierActiveEnergyBurned': 'CaloriesOut',
+        'HKQuantityTypeIdentifierBasalEnergyBurned': 'BasalCaloriesOut',
+        'HKQuantityTypeIdentifierBodyFatPercentage': 'BodyFatPercentage',
+        'HKQuantityTypeIdentifierLeanBodyMass': 'LeanBodyMass',  # in kg
+        'HKQuantityTypeIdentifierDistanceWalkingRunning': 'DistanceWalkingRunning',  # in km
+        'HKQuantityTypeIdentifierStepCount': 'StepCount',
+    }
+
+    daily_data = defaultdict(lambda: defaultdict(float))
+
+    # Aggregate values by date
+    for r_type, records in parsed_data.items():
+        column_name = type_to_column.get(r_type)
+        if not column_name:
             continue
 
-        # Use startDate or creationDate if available
-        df["timestamp"] = pd.to_datetime(df["startDate"] if "startDate" in df.columns else df["creationDate"])
-        df["value"] = pd.to_numeric(df["value"], errors="coerce")
-        df = df.dropna(subset=["value"])
-        df["date"] = df["timestamp"].dt.date
-        records[key] = df
+        for entry in records:
+            date = entry["date"]
+            value = entry["value"]
+            daily_data[date][column_name] += value
 
-    # Daily aggregation
-    weight_daily = records["Weight"].sort_values("timestamp").groupby("date")["value"].last().rename("Weight")
-    intake_daily = records["DietaryEnergyConsumed"].groupby("date")["value"].sum().rename("CaloriesIn")
-    burn_daily = records["ActiveEnergyBurned"].groupby("date")["value"].sum().rename("CaloriesOut")
+    # Create DataFrame
+    df = pd.DataFrame.from_dict(daily_data, orient='index')
+    df.index.name = "date"
+    df.reset_index(inplace=True)
+    df.sort_values(by="date", inplace=True)
 
-    # Merge all into one daily dataframe
-    daily = pd.concat([weight_daily, intake_daily, burn_daily], axis=1).dropna(how="all")
+    logging.info(f"Aggregated daily entries: {len(df)} days with data")
+    logging.debug(f"Columns available: {df.columns.tolist()}")
 
-    logging.info(f"Aggregated daily entries: {len(daily)} days with data")
-
-    return daily.reset_index().rename(columns={"index": "Date"})
+    return df
