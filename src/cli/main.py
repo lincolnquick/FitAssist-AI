@@ -10,6 +10,12 @@ def main():
     try:
         raw_data = parse_apple_health_export("data/export.xml")
         daily_df = clean_and_aggregate(raw_data)
+        
+        # Debugging output
+        print("\n--- Aggregated Columns ---")
+        print(daily_df.columns)
+        print(daily_df.head())
+
         model_df = preprocess_for_modeling(daily_df)
         model_df = train_and_predict(model_df)
 
