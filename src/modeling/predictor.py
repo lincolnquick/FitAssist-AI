@@ -1,72 +1,108 @@
 import pandas as pd
 import numpy as np
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_absolute_error
 import matplotlib.pyplot as plt
 import logging
+from sklearn.linear_model import LinearRegression
+from typing import Tuple, Optional
+from config import safety_config as cfg
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    datefmt="%H:%M:%S"
+)
 
-def preprocess_for_modeling(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Prepares the dataset by computing net calories, interpolating missing weights,
-    and shifting net calories for predictive modeling.
-    """
+def preprocess_for_modeling(df: pd.DataFrame, interpolate_missing: bool = True) -> Optional[pd.DataFrame]:
+    logging.info("Preprocessing data for modeling...")
+
     df = df.copy()
-    
-    # Check necessary columns
-    required = {"Date", "Weight", "CaloriesIn", "CaloriesOut"}
-    if not required.issubset(df.columns):
-        raise ValueError(f"DataFrame is missing one of the required columns: {required}")
+    df['date'] = pd.to_datetime(df['date'])
+    df = df.sort_values(by='date')
 
-    df["NetCalories"] = df["CaloriesIn"] - df["CaloriesOut"]
-    
-    # Interpolate missing weights
-    df["Weight"] = df["Weight"].interpolate(method="linear")
-    
-    # Drop days with missing net calorie info
-    df = df.dropna(subset=["NetCalories"])
-    
-    # Shift net calories by 1 day to model delayed effect
-    df["NetCaloriesShifted"] = df["NetCalories"].shift(1)
-    df = df.dropna(subset=["Weight", "NetCaloriesShifted"])
+    required_cols = ['date', 'Weight', 'CaloriesIn', 'CaloriesOut']
+    missing_cols = [col for col in required_cols if col not in df.columns]
+    if missing_cols:
+        logging.error(f"Missing required columns: {missing_cols}")
+        return None
 
-    logging.info(f"Prepared dataset with {len(df)} rows after cleaning and shifting.")
-    return df
+    df = df[required_cols]
 
+    if interpolate_missing:
+        df[['Weight', 'CaloriesIn', 'CaloriesOut']] = df[['Weight', 'CaloriesIn', 'CaloriesOut']].interpolate(limit_direction='both')
 
-def train_and_predict(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Trains a linear regression model using NetCaloriesShifted to predict weight.
-    Adds predictions to the dataframe.
-    """
-    X = df[["NetCaloriesShifted"]]
-    y = df["Weight"]
+    df.dropna(subset=required_cols, inplace=True)
+
+    if len(df) < cfg.MINIMUM_VALID_RECORDS:
+        logging.warning(f"Insufficient data: less than {cfg.MINIMUM_VALID_RECORDS} days of complete entries.")
+
+    df['NetCalories'] = df['CaloriesIn'] - df['CaloriesOut']
+    df['DaysSinceStart'] = (df['date'] - df['date'].min()).dt.days
+
+    max_gap = df['date'].diff().dt.days.max()
+    if max_gap > cfg.MAX_ALLOWED_LOGGING_GAP_DAYS:
+        logging.warning(f"Detected large gap in logging: {max_gap} days.")
+
+    # Filter out unrealistic values
+    df = df[
+        (df['Weight'] >= cfg.MIN_WEIGHT_KG) & (df['Weight'] <= cfg.MAX_WEIGHT_KG) &
+        (df['CaloriesIn'] >= cfg.MIN_CALORIES_IN) & (df['CaloriesIn'] <= cfg.MAX_CALORIES_IN) &
+        (df['CaloriesOut'] >= cfg.MIN_CALORIES_OUT) & (df['CaloriesOut'] <= cfg.MAX_CALORIES_OUT)
+    ]
+
+    logging.info(f"Data ready for modeling: {len(df)} records.")
+    return df[['DaysSinceStart', 'Weight', 'NetCalories']]
+
+def train_and_predict(df: pd.DataFrame, future_days: int = 90) -> Optional[pd.DataFrame]:
+    if df is None or df.empty:
+        logging.error("Cannot train model: DataFrame is empty or None.")
+        return None
+
+    logging.info("Training linear regression model...")
+    X = df[['DaysSinceStart', 'NetCalories']]
+    y = df['Weight']
 
     model = LinearRegression()
     model.fit(X, y)
 
-    df["PredictedWeight"] = model.predict(X)
-    mae = mean_absolute_error(y, df["PredictedWeight"])
-    logging.info(f"Trained regression model. MAE: {mae:.2f} kg")
+    max_day = df['DaysSinceStart'].max()
+    future_days_range = np.arange(max_day + 1, max_day + future_days + 1)
+    avg_net_calories = df['NetCalories'].mean()
 
-    return df
+    future_X = pd.DataFrame({
+        'DaysSinceStart': future_days_range,
+        'NetCalories': [avg_net_calories] * future_days
+    })
 
+    predicted_weights = model.predict(future_X)
+    prediction_df = pd.DataFrame({
+        'DaysFromToday': future_days_range - max_day,
+        'PredictedWeightKg': predicted_weights,
+        'PredictedWeightLbs': predicted_weights * cfg.KG_TO_LBS
+    })
 
-def plot_predictions(df: pd.DataFrame, title: str = "Weight Prediction vs. Actual"):
-    """
-    Plots actual vs predicted weight over time.
-    """
-    if "PredictedWeight" not in df.columns:
-        raise ValueError("PredictedWeight column not found. Did you run train_and_predict()?")
+    logging.info("Prediction complete.")
+    return prediction_df
 
-    plt.figure(figsize=(10, 5))
-    plt.plot(df["Date"], df["Weight"], label="Actual Weight", linewidth=2)
-    plt.plot(df["Date"], df["PredictedWeight"], label="Predicted Weight", linestyle="--")
-    plt.title(title)
-    plt.xlabel("Date")
-    plt.ylabel("Weight (kg)")
+def plot_predictions(df: pd.DataFrame, prediction_df: pd.DataFrame):
+    logging.info("Plotting predictions...")
+
+    if df is None or prediction_df is None:
+        logging.error("Cannot plot: input data missing.")
+        return
+
+    plt.figure(figsize=(12, 6))
+    plt.plot(df['DaysSinceStart'], df['Weight'], label='Actual Weight (kg)')
+    plt.plot(
+        df['DaysSinceStart'].iloc[-1] + prediction_df['DaysFromToday'],
+        prediction_df['PredictedWeightKg'],
+        label='Predicted Weight (kg)',
+        linestyle='--'
+    )
+    plt.xlabel('Days')
+    plt.ylabel('Weight (kg)')
+    plt.title('Weight Forecast')
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
     plt.show()
+    logging.info("Plot displayed.")
