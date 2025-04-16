@@ -61,25 +61,59 @@ pip install -r REQUIREMENTS.txt
 
 ## Usage
 
-1. Export your health data from Apple Health on iPhone.
-2. Place the `export.xml` file inside the `data/` directory.
-3. Run the CLI tool (WIP):
-   ```bash
-   python src/cli/main.py
-   ```
+### Step 1: Export Data from Apple Health
+1. Open the Health app on your iPhone.
+2. Tap your profile photo > Export All Health Data.
+3. AirDrop or transfer the `export.zip` to your Mac, unzip it, and place `export.xml` into the `data/` directory.
 
-*Note: Do not commit Apple Health exports to version control. They are automatically excluded via `.gitignore`.*
+> **Important:** Do not commit this file to GitHub. It is excluded by `.gitignore`.
+
+---
+
+### Step 2: Run FitAssist AI
+
+From the project root, activate your virtual environment:
+
+```bash
+source venv/bin/activate
+```
+Then run the main script using the module system:
+```bash
+python -m src.cli.main
+```
+
+This script will:
+- Parse your Apple Health data
+- Aggregate daily values
+- Predict future weight trends based on net calorie balance
+- Prompot you for a target weight and date
+- Evaluate whether your goal is on track and display results
+
+### Example Output
+
+```bash
+=== FitAssist AI ===
+Loading Apple Health data...
+Training model...
+MAE: 1.23 kg
+Enter your target weight (kg): 72
+Enter your target date (YYYY-MM-DD): 2025-07-01
+
+Predicted weight on 2025-07-01: 74.3 kg
+Your goal: 72.0 kg
+You're predicted to be 2.3 kg above your goal.
+```
 
 ## Portfolio Milestones
 
-| Week | Deliverable           | File                                      |
-|------|------------------------|-------------------------------------------|
-| 2    | Use-Case Scenario      | `milestones/milestone_02_use_case.md`     |
-| 3    | Neural Networks        | `milestones/milestone_03_neural_networks.md` *(TBD)* |
-| 4    | Intelligent Search     | `milestones/milestone_04_search_methods.md` *(TBD)* |
-| 5    | Classification         | `milestones/milestone_05_classification.md` *(TBD)* |
-| 6    | First-Order Logic      | `milestones/milestone_06_first_order_logic.md` *(TBD)* |
-| 8    | Final Submission       | `milestones/final_report.md` *(TBD)* |
+| Week | Deliverable            | File                                      | Due Date |
+|------|------------------------|-------------------------------------------|---------|
+| 2    | Use-Case Scenario      | `milestones/milestone_02_use_case.md`     | 2025-04-27 |
+| 3    | Neural Networks        | `milestones/milestone_03_neural_networks.md` | 2025-05-04 |
+| 4    | Intelligent Search     | `milestones/milestone_04_search_methods.md` | 2025-05-11 |
+| 5    | Classification         | `milestones/milestone_05_classification.md` | 2025-05-18 |
+| 6    | First-Order Logic      | `milestones/milestone_06_first_order_logic.md` | 2025-05-25 |
+| 8    | Final Submission       | `milestones/final_report.md` | 2025-06-08 |
 
 ## License
 
