@@ -36,7 +36,10 @@ def main():
 
     try:
         raw_data = parse_apple_health_export("data/export.xml")
-        daily_df = clean_and_aggregate(raw_data)
+        parsed_records = raw_data["data"]
+        weight_unit = raw_data["weight_unit"]
+
+        daily_df = clean_and_aggregate(parsed_records, weight_unit=weight_unit)
 
         if daily_df.empty:
             print("Error: No valid daily data found. Check your Health export for completeness.")

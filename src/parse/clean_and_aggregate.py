@@ -1,58 +1,61 @@
 import pandas as pd
-from collections import defaultdict
 import logging
-from typing import Dict, List
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    datefmt="%H:%M:%S"
+from config.constants import (
+    REQUIRED_COLUMNS,
+    OPTIONAL_COLUMNS,
+    MIN_DAYS_REQUIRED,
+    MAX_MISSING_DAY_GAP,
+    LBS_TO_KG
 )
 
-def clean_and_aggregate(parsed_data: Dict[str, List[Dict]]) -> pd.DataFrame:
+logger = logging.getLogger(__name__)
+
+
+def clean_and_aggregate(parsed_data: dict, weight_unit: str) -> pd.DataFrame:
     """
-    Cleans and aggregates parsed Apple Health data by date.
-    
-    Args:
-        parsed_data (Dict): Dictionary of lists keyed by Apple Health record type.
-    
-    Returns:
-        pd.DataFrame: Aggregated daily metrics with user-friendly column names.
+    Cleans and aggregates Apple Health data.
+    Handles required and optional metrics, applies unit conversions, and returns
+    a daily dataframe suitable for modeling.
     """
-    logging.info("Starting data cleaning and aggregation...")
+    logger.info("Starting data cleaning and aggregation...")
 
-    # Map Apple Health record types to output column names
-    type_to_column = {
-        'HKQuantityTypeIdentifierBodyMass': 'Weight',  # in kg
-        'HKQuantityTypeIdentifierDietaryEnergyConsumed': 'CaloriesIn',
-        'HKQuantityTypeIdentifierActiveEnergyBurned': 'CaloriesOut',
-        'HKQuantityTypeIdentifierBasalEnergyBurned': 'BasalCaloriesOut',
-        'HKQuantityTypeIdentifierBodyFatPercentage': 'BodyFatPercentage',
-        'HKQuantityTypeIdentifierLeanBodyMass': 'LeanBodyMass',  # in kg
-        'HKQuantityTypeIdentifierDistanceWalkingRunning': 'DistanceWalkingRunning',  # in km
-        'HKQuantityTypeIdentifierStepCount': 'StepCount',
-    }
+    daily_frames = {}
 
-    daily_data = defaultdict(lambda: defaultdict(float))
-
-    # Aggregate values by date
-    for r_type, records in parsed_data.items():
-        column_name = type_to_column.get(r_type)
-        if not column_name:
+    for column in REQUIRED_COLUMNS + OPTIONAL_COLUMNS:
+        if column not in parsed_data:
             continue
 
-        for entry in records:
-            date = entry["date"]
-            value = entry["value"]
-            daily_data[date][column_name] += value
+        df = pd.DataFrame(parsed_data[column])
+        if df.empty:
+            continue
 
-    # Create DataFrame
-    df = pd.DataFrame.from_dict(daily_data, orient='index')
-    df.index.name = "date"
-    df.reset_index(inplace=True)
-    df.sort_values(by="date", inplace=True)
+        df["date"] = pd.to_datetime(df["date"])
+        df["value"] = pd.to_numeric(df["value"], errors="coerce")
 
-    logging.info(f"Aggregated daily entries: {len(df)} days with data")
-    logging.debug(f"Columns available: {df.columns.tolist()}")
+        # Apply conversion for weight if recorded in pounds
+        if column == "Weight" and weight_unit.lower() == "lb":
+            df["value"] = df["value"] * LBS_TO_KG
+        elif column == "BodyFat" and df["value"].max() < 1.0:
+            df["value"] = df["value"] * 100  # Convert fraction to percent
 
-    return df
+        # Daily average
+        daily = df.groupby("date")["value"].mean().reset_index()
+        daily.rename(columns={"value": column}, inplace=True)
+        daily_frames[column] = daily
+
+    if not daily_frames:
+        raise ValueError("No valid metrics found in parsed data.")
+
+    # Merge all daily frames
+    merged_df = None
+    for df in daily_frames.values():
+        merged_df = df if merged_df is None else pd.merge(merged_df, df, on="date", how="outer")
+
+    if merged_df is None or merged_df.empty:
+        raise ValueError("No valid daily data found. Check your Health export for completeness.")
+
+    merged_df.sort_values("date", inplace=True)
+    merged_df.reset_index(drop=True, inplace=True)
+
+    logger.info(f"Aggregated daily entries: {merged_df.shape[0]} days with data")
+    return merged_df

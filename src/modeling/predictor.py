@@ -4,7 +4,7 @@ import logging
 from datetime import timedelta
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
-from src.config.constants import (
+from config.constants import (
     MIN_DAYS_REQUIRED,
     MAX_MISSING_DAY_GAP,
     REQUIRED_COLUMNS,
