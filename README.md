@@ -21,13 +21,16 @@ This project is developed as part of the **CSC510: Foundations of Artificial Int
 
 ```
 FitAssist-AI/
+|── config/                   # Configuration constants, safety thresholds, etc.
 ├── data/                     # Apple Health XML exports (excluded from version control)
+├── milestones/               # Weekly milestone markdown files
+├── output/                   # Output files from execution for testing
 ├── src/                      # Source code modules
 │   ├── parse/                # XML parser for Apple Health data
 │   ├── modeling/             # Weight prediction and metabolic modeling
 │   ├── logic/                # Symbolic planning and goal evaluation
+│   ├── tools/                # Tools used for planning project
 │   └── cli/                  # Command-line interface
-├── milestones/               # Weekly milestone markdown files
 ├── tests/                    # Unit tests
 ├── .gitignore                # Excludes sensitive and unnecessary files
 ├── LICENSE                   # MIT License
@@ -77,9 +80,9 @@ From the project root, activate your virtual environment:
 ```bash
 source venv/bin/activate
 ```
-Then run the main script using the module system:
+Then run the main run script:
 ```bash
-python -m src.cli.main
+python run.py
 ```
 
 This script will:

@@ -1,5 +1,8 @@
 import xml.etree.ElementTree as ET
 from collections import defaultdict
+from config.constants import (
+    LBS_TO_KG
+)
 import logging
 import os
 
@@ -68,7 +71,7 @@ def parse_apple_health_export(xml_path: str) -> dict:
                     weight_unit = unit
                     logging.info(f"Detected weight unit: {weight_unit}")
                 if unit == "lb":
-                    value *= 0.45359237
+                    value *= LBS_TO_KG
                 unit = "kg"
 
             data[r_type].append({
