@@ -1,157 +1,64 @@
-# src/analyze/correlate_metrics.py
-
-"""
-correlate_metrics.py
-
-Analyzes correlations between health and lifestyle metrics to evaluate:
-- Calorie balance and weight change
-- Fat vs. lean mass loss
-- Behavior-driven trends (e.g., activity vs intake)
-- Metabolic adaptation indicators
-
-Uses smoothed "Trend" metrics when available to reduce daily noise and improve analysis stability.
-
-Outputs:
-- Console summary with interpretation
-- Text report
-- CSV file of correlations
-
-Author: Lincoln Quick
-"""
-
+from itertools import combinations
+import os
 import pandas as pd
 import numpy as np
-import logging
-import os
 
-logger = logging.getLogger(__name__)
-
-# Mapping of raw to smoothed "Trend" columns
-trend_map = {
-    'Weight': 'TrendWeight',
-    'BodyFatPercentage': 'TrendBodyFatPercentage',
-    'LeanBodyMass': 'TrendLeanBodyMass',
-    'CaloriesIn': 'TrendCaloriesIn',
-    'BasalCaloriesBurned': 'TrendBasalCaloriesBurned',
-    'ActiveCaloriesBurned': 'TrendActiveCaloriesBurned',
-    'TDEE': 'TrendTDEE',
-    'NetCalories': 'TrendNetCalories',
-}
+output_dir = "output"
+correlation_csv = os.path.join(output_dir, "correlation_summary.csv")
+correlation_txt = os.path.join(output_dir, "correlation_report.txt")
 
 
-def interpret_correlation(r: float) -> str:
-    """Provides a descriptive interpretation of the correlation coefficient."""
-    if pd.isna(r):
-        return "insufficient data"
-    abs_r = abs(r)
-    if abs_r >= 0.9:
-        strength = "very strong"
-    elif abs_r >= 0.7:
-        strength = "strong"
-    elif abs_r >= 0.5:
-        strength = "moderate"
-    elif abs_r >= 0.3:
-        strength = "weak"
-    elif abs_r >= 0.1:
-        strength = "very weak"
-    else:
-        strength = "negligible"
-    direction = "positive" if r > 0 else "negative" if r < 0 else "no"
-    return f"{strength} {direction} correlation"
-
-
-def correlate_metrics(df: pd.DataFrame, output_dir: str = "output") -> None:
+def correlate_metrics(df: pd.DataFrame, output_dir: str) -> list[str]:
     """
-    Analyzes and reports correlations between health metrics using smoothed trend values where possible.
+    Compute Pearson correlation coefficients between all reasonable combinations of numeric health metrics.
+    Prefers trend-based or delta metrics if available. Saves full correlation results to CSV and
+    top correlations (by absolute value) to a human-readable text file.
 
-    Args:
-        df (pd.DataFrame): Cleaned health data.
-        output_dir (str): Directory to save correlation outputs.
+    Parameters:
+        df (pd.DataFrame): Cleaned and smoothed health metrics.
+        output_dir (str): Path to save output files.
+
+    Returns:
+        list[str]: Top 10 correlation summary lines sorted by absolute r-value.
     """
-    os.makedirs(output_dir, exist_ok=True)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
-    df = df.sort_values("date").set_index("date").copy()
+    # Use only numeric columns
+    numeric_df = df.select_dtypes(include=[np.number]).copy()
 
-    # Replace metrics with their trend versions if available
-    for raw, trend in trend_map.items():
-        if trend in df.columns:
-            df[raw] = df[trend]
+    # Prefer trend columns if available
+    for col in list(numeric_df.columns):
+        if not col.startswith("Trend") and f"Trend{col}" in numeric_df.columns:
+            numeric_df.drop(columns=[col], inplace=True)
 
-    # Derived metrics
-    df["FatMass"] = df["Weight"] * df["BodyFatPercentage"]
-    df["LeanMass"] = df["LeanBodyMass"]
-    df["TDEE"] = df["BasalCaloriesBurned"] + df["ActiveCaloriesBurned"]
-    df["NetCalories"] = df["CaloriesIn"] - df["TDEE"]
-    df["BasalMinusIntake"] = df["BasalCaloriesBurned"] - df["CaloriesIn"]
+    corr_pairs = []
+    for col1, col2 in combinations(numeric_df.columns, 2):
+        series1 = numeric_df[col1].dropna()
+        series2 = numeric_df[col2].dropna()
+        combined = pd.concat([series1, series2], axis=1, join='inner').dropna()
 
-    # Rolling deltas over 21-day windows
-    rolling = df[["Weight", "FatMass", "LeanMass", "NetCalories"]].rolling(window=21, min_periods=11)
-    df["WeightDelta"] = rolling["Weight"].apply(lambda x: x.iloc[-1] - x.iloc[0])
-    df["FatMassDelta"] = rolling["FatMass"].apply(lambda x: x.iloc[-1] - x.iloc[0])
-    df["LeanMassDelta"] = rolling["LeanMass"].apply(lambda x: x.iloc[-1] - x.iloc[0])
-    df["NetCalDelta"] = rolling["NetCalories"].sum()
+        if len(combined) >= 2:
+            r = combined.corr(method="pearson").iloc[0, 1]
+            corr_pairs.append({
+                "Metric1": col1,
+                "Metric2": col2,
+                "Correlation": r,
+                "AbsCorrelation": abs(r)
+            })
 
-    # Filter for valid rows
-    df = df.dropna(subset=["WeightDelta", "FatMassDelta", "LeanMassDelta", "NetCalDelta"])
+    corr_df = pd.DataFrame(corr_pairs).sort_values(by="AbsCorrelation", ascending=False)
+    corr_df.to_csv(correlation_csv, index=False)
 
-    correlation_sets = {
-        "Energy Balance": [
-            ("NetCalories", "WeightDelta"),
-            ("CaloriesIn", "TDEE"),
-            ("TDEE", "WeightDelta"),
-            ("BasalMinusIntake", "WeightDelta"),
-        ],
-        "Body Composition": [
-            ("Weight", "FatMass"),
-            ("Weight", "LeanMass"),
-            ("FatMass", "LeanMass"),
-        ],
-        "Activity & Behavior": [
-            ("StepCount", "ActiveCaloriesBurned"),
-            ("DistanceWalkingRunning", "ActiveCaloriesBurned"),
-            ("StepCount", "NetCalories"),
-            ("CaloriesIn", "StepCount"),
-            ("CaloriesIn", "ActiveCaloriesBurned"),
-        ],
-        "Change-on-Change": [
-            ("WeightDelta", "NetCalDelta"),
-            ("FatMassDelta", "NetCalDelta"),
-            ("LeanMassDelta", "NetCalDelta"),
-        ]
-    }
+    summary_lines = ["\n--- Strongest Correlation of Metrics ---"]
+    top = corr_df.head(10)
+    for _, row in top.iterrows():
+        summary_lines.append(f"{row['Metric1']} vs {row['Metric2']}: r = {row['Correlation']:.3f}")
 
-    report_lines = ["=== Correlation Report ===\n"]
-    correlations = []
+    # Save full correlation report
+    with open(correlation_txt, "w") as f:
+        f.write("--- Correlation Report (All Metrics) ---\n\n")
+        for _, row in corr_df.iterrows():
+            f.write(f"{row['Metric1']} vs {row['Metric2']}: r = {row['Correlation']:.3f}\n")
 
-    for section, pairs in correlation_sets.items():
-        report_lines.append(f"\n--- {section} ---")
-        for x, y in pairs:
-            if x in df.columns and y in df.columns:
-                valid_df = df[[x, y]].dropna()
-                if len(valid_df) > 2:
-                    r = valid_df[x].corr(valid_df[y])
-                    interpretation = interpret_correlation(r)
-                    report_lines.append(f"{x} vs {y}: r = {r:.3f} ({interpretation})")
-                    correlations.append({
-                        "Metric1": x,
-                        "Metric2": y,
-                        "Correlation": r,
-                        "Interpretation": interpretation,
-                        "Category": section
-                    })
-                else:
-                    report_lines.append(f"{x} vs {y}: insufficient data")
-
-    # Save text report
-    report_path = os.path.join(output_dir, "correlation_report.txt")
-    with open(report_path, "w") as f:
-        for line in report_lines:
-            print(line)
-            f.write(line + "\n")
-    logger.info(f"Correlation summary saved to {report_path}")
-
-    # Save CSV file
-    df_corr = pd.DataFrame(correlations)
-    csv_path = os.path.join(output_dir, "correlation_summary.csv")
-    df_corr.to_csv(csv_path, index=False)
-    logger.info(f"Correlation CSV saved to {csv_path}")
+    return summary_lines

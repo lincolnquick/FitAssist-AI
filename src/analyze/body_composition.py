@@ -46,7 +46,7 @@ def analyze_body_composition(df: pd.DataFrame, output_dir: str = "output") -> pd
     df["LeanMass"] = df["LeanBodyMass"]
 
     # Resample monthly, using last value of each month
-    monthly = df[["Weight", "FatMass", "LeanMass"]].resample("M").last()
+    monthly = df[["Weight", "FatMass", "LeanMass"]].resample("ME").last()
     monthly_change = monthly.diff().dropna()
 
     # Compute percent contributions

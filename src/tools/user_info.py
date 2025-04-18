@@ -27,7 +27,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Default path for user characteristics CSV
-USER_CSV_PATH = "user_characteristics.csv"
+USER_CSV_PATH = "data/user_characteristics.csv"
 
 def load_or_prompt_user_info(path: str = USER_CSV_PATH) -> dict:
     """
@@ -66,19 +66,3 @@ def load_or_prompt_user_info(path: str = USER_CSV_PATH) -> dict:
 
     logger.info(f"User characteristics saved to: {path}")
     return user_info
-
-
-def calculate_age(dob_str: str, reference_date: datetime) -> float:
-    """
-    Calculate age as a float given a date of birth and reference date.
-
-    Parameters:
-        dob_str (str): Date of birth in YYYY-MM-DD format.
-        reference_date (datetime): The date to calculate age as of.
-
-    Returns:
-        float: Age in years (e.g., 33.52).
-    """
-    dob = datetime.strptime(dob_str, "%Y-%m-%d")
-    delta_days = (reference_date - dob).days
-    return delta_days / 365.25  # average year length with leap years
