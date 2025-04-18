@@ -1,67 +1,79 @@
 """
 Configuration constants for FitAssist AI.
-This file stores required fields, safety thresholds, and other tunable values
-used throughout the pipeline.
+
+This module centralizes tunable parameters for parsing, cleaning, and modeling
+Apple Health data.
 """
 
-# Mapping from HealthKit type to internal label
-REQUIRED_METRICS = {
+# HealthKit -> internal metric name mapping
+TARGET_METRICS = {
     "HKQuantityTypeIdentifierBodyMass": "Weight",
-    "HKQuantityTypeIdentifierDietaryEnergyConsumed": "CaloriesIn",
-    "HKQuantityTypeIdentifierActiveEnergyBurned": "CaloriesOut",
-}
-
-OPTIONAL_METRICS = {
-    "HKQuantityTypeIdentifierBasalEnergyBurned": "BasalCaloriesOut",
-    "HKQuantityTypeIdentifierBodyFatPercentage": "BodyFat",
     "HKQuantityTypeIdentifierLeanBodyMass": "LeanBodyMass",
-    "HKQuantityTypeIdentifierDistanceWalkingRunning": "DistanceWalkingRunning",
+    "HKQuantityTypeIdentifierBodyFatPercentage": "BodyFatPercentage",
+    "HKQuantityTypeIdentifierDietaryEnergyConsumed": "CaloriesIn",
+    "HKQuantityTypeIdentifierBasalEnergyBurned": "BasalCaloriesBurned",
+    "HKQuantityTypeIdentifierActiveEnergyBurned": "ActiveCaloriesBurned",
     "HKQuantityTypeIdentifierStepCount": "StepCount",
+    "HKQuantityTypeIdentifierDistanceWalkingRunning": "DistanceWalkingRunning",
 }
 
 # Metrics that should be summed over the day
-CUMULATIVE_METRICS = {
+SUM_METRICS = {
     "CaloriesIn",
-    "CaloriesOut",
-    "BasalCaloriesOut",
+    "BasalCaloriesBurned",
+    "ActiveCaloriesBurned",
     "StepCount",
-    "DistanceWalkingRunning"
+    "DistanceWalkingRunning",
 }
 
-# Metrics that should be averaged per day
-AVERAGED_METRICS = {
+# Metrics that should be averaged if multiple entries exist
+AVERAGE_METRICS = {
     "Weight",
-    "BodyFat",
-    "LeanBodyMass"
+    "LeanBodyMass",
+    "BodyFatPercentage",
 }
 
-# Required columns in final DataFrame for modeling
-REQUIRED_COLUMNS = ["Weight", "CaloriesIn", "CaloriesOut"]
+# Prioritization for overlapping records (used for deduplication)
+SOURCE_PRIORITY = {
+    "Apple Watch": 3,
+    "iPhone": 2,
+    "default": 1,  # Third-party or unknown devices
+}
 
-# Optional columns to pass through if available
+# Columns required for modeling
+REQUIRED_COLUMNS = ["date", "Weight" ,"BodyFatPercentage", "LeanBodyMass",
+                    "StepCount", "DistanceWalkingRunning", "BasalCaloriesBurned", 
+                    "ActiveCaloriesBurned", "CaloriesIn"]
+
+# Columns that are computed from other metrics
+COMPUTED_COLUMNS = ["TDEE", "NetCalories"]
+
+# Optional fields used in visualization or extended metrics
 OPTIONAL_COLUMNS = [
-    "BasalCaloriesOut",
+    "BasalCaloriesBurned",
     "StepCount",
-    "BodyFat",
+    "BodyFatPercentage",
     "LeanBodyMass",
-    "DistanceWalkingRunning"
+    "DistanceWalkingRunning",
 ]
 
-# Minimum number of days of data required to attempt modeling
+# Interpolation / modeling thresholds
 MIN_DAYS_REQUIRED = 30
-
-# Maximum allowed consecutive missing days in daily time series
 MAX_MISSING_DAY_GAP = 7
-
-# Default weight unit (fallback)
-DEFAULT_WEIGHT_UNIT = "kg"
-
-# Safety constraints
-SAFE_MIN_CALORIES = 1200  # kcal/day
-SAFE_MAX_WEIGHT_LOSS_RATE = 2.0  # lbs/week
-SAFE_MAX_WEIGHT_GAIN_RATE = 2.0  # lbs/week
 
 # Unit conversions
 LBS_TO_KG = 0.453592
 KG_TO_LBS = 2.20462
 M_TO_KM = 0.001
+
+# Default unit if none detected
+DEFAULT_WEIGHT_UNIT = "kg"
+
+# Recommended safety thresholds
+SAFE_MIN_CALORIES = 1200  # kcal/day
+SAFE_MAX_WEIGHT_LOSS_RATE = 2.0  # lbs/week
+SAFE_MAX_WEIGHT_GAIN_RATE = 2.0  # lbs/week
+
+# Suggested additional constants (not yet used but might be useful):
+# - MAX_INTERPOLATION_DAYS = 14
+# - PREFERRED_METRIC_SOURCES = ["Apple Watch", "iPhone"]

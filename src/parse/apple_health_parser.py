@@ -1,8 +1,6 @@
 import xml.etree.ElementTree as ET
 from collections import defaultdict
-from config.constants import (
-    LBS_TO_KG
-)
+from config.constants import LBS_TO_KG
 import logging
 import os
 
@@ -12,52 +10,47 @@ logging.basicConfig(
     datefmt="%H:%M:%S"
 )
 
+# Metrics that should be summed across the day (additive)
+SUM_METRICS = {
+    'HKQuantityTypeIdentifierDietaryEnergyConsumed',
+    'HKQuantityTypeIdentifierActiveEnergyBurned',
+    'HKQuantityTypeIdentifierBasalEnergyBurned',
+    'HKQuantityTypeIdentifierStepCount',
+    'HKQuantityTypeIdentifierDistanceWalkingRunning',
+}
+
+# Metrics that should be averaged per day (point-in-time or snapshot)
+AVERAGE_METRICS = {
+    'HKQuantityTypeIdentifierBodyMass',
+    'HKQuantityTypeIdentifierBodyFatPercentage',
+    'HKQuantityTypeIdentifierLeanBodyMass',
+}
+
+ALL_METRICS = SUM_METRICS | AVERAGE_METRICS
+
 def parse_apple_health_export(xml_path: str) -> dict:
-    """
-    Parses Apple Health XML export to extract relevant health metrics.
-
-    Args:
-        xml_path (str): Path to the exported Apple Health XML file.
-
-    Returns:
-        dict: A dictionary containing:
-            - "data": Dictionary mapping record type to list of date-value dicts
-            - "weight_unit": Original unit used for weight ("kg" or "lb")
-    """
     if not os.path.exists(xml_path):
         raise FileNotFoundError(f"File not found: {xml_path}")
 
     logging.info(f"Parsing Apple Health data from {xml_path}...")
 
-    # Record types to extract
-    target_types = {
-        'HKQuantityTypeIdentifierBodyMass',
-        'HKQuantityTypeIdentifierDietaryEnergyConsumed',
-        'HKQuantityTypeIdentifierActiveEnergyBurned',
-        'HKQuantityTypeIdentifierBasalEnergyBurned',
-        'HKQuantityTypeIdentifierBodyFatPercentage',
-        'HKQuantityTypeIdentifierLeanBodyMass',
-        'HKQuantityTypeIdentifierDistanceWalkingRunning',
-        'HKQuantityTypeIdentifierStepCount',
-    }
-
-    data = defaultdict(list)
+    records_by_type_and_date = defaultdict(lambda: defaultdict(list))
     weight_unit = None
 
     context = ET.iterparse(xml_path, events=("start", "end"))
-    _, root = next(context)  # Get root element
+    _, root = next(context)
 
     for event, elem in context:
         if event == "end" and elem.tag == "Record":
             r_type = elem.get("type")
-            if r_type not in target_types:
+            if r_type not in ALL_METRICS:
                 continue
 
             unit = elem.get("unit")
             value = elem.get("value")
-            start_date = elem.get("startDate")
+            date = elem.get("startDate")[:10]
 
-            if not (value and start_date):
+            if not (value and date):
                 continue
 
             try:
@@ -65,21 +58,32 @@ def parse_apple_health_export(xml_path: str) -> dict:
             except ValueError:
                 continue
 
-            # Normalize weight units to kg
-            if r_type == 'HKQuantityTypeIdentifierBodyMass':
+            # For debugging specific dates
+            target_dates = {"2025-04-13", "2025-04-14", "2025-04-15"}
+            if date in target_dates:
+                logging.debug(f"[PARSE] {r_type} on {date}: value={value}, unit={unit}")
+
+            if r_type == "HKQuantityTypeIdentifierBodyMass":
                 if weight_unit is None:
                     weight_unit = unit
                     logging.info(f"Detected weight unit: {weight_unit}")
                 if unit == "lb":
                     value *= LBS_TO_KG
-                unit = "kg"
 
-            data[r_type].append({
-                "date": start_date[:10],  # Extract only date (YYYY-MM-DD)
-                "value": value
-            })
+            records_by_type_and_date[r_type][date].append(value)
+            elem.clear()
 
-            elem.clear()  # Free memory
+    # Aggregate data
+    data = defaultdict(list)
+    for r_type, daily_values in records_by_type_and_date.items():
+        for date, values in daily_values.items():
+            if r_type in SUM_METRICS:
+                aggregated = sum(values)
+            elif r_type in AVERAGE_METRICS:
+                aggregated = sum(values) / len(values)
+            else:
+                continue  # Shouldn't happen
+            data[r_type].append({"date": date, "value": aggregated})
 
     logging.info("Finished parsing records.")
     return {

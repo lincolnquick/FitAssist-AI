@@ -48,10 +48,12 @@ def preprocess_for_modeling(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
+
 def train_and_predict(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Trains a simple linear regression model to predict future weight based on caloric deficit trends.
-    Predicts weight for 30, 60, and 90 days into the future.
+    Trains a linear regression model to predict weight based on time (DaysFromStart),
+    emphasizing more recent data using sample weights.
+    Returns predictions for 30, 60, and 90 days into the future.
     """
     if df.empty:
         logger.error("Cannot train model: DataFrame is empty or None.")
@@ -59,33 +61,39 @@ def train_and_predict(df: pd.DataFrame) -> pd.DataFrame:
 
     logger.info("Training linear regression model...")
 
-    # Use days-from-start as time axis
+    # Copy and prepare data
     df = df.copy()
     df["DaysFromStart"] = (df["date"] - df["date"].min()).dt.days
     df = df.dropna(subset=["Weight", "DaysFromStart"])
 
-    # Train model
+    # Emphasize more recent data using sample weights
+    max_day = df["DaysFromStart"].max()
+    df["SampleWeight"] = df["DaysFromStart"] / max_day  # Newer data gets higher weight
+
     X = df[["DaysFromStart"]]
     y = df["Weight"]
-    model = LinearRegression()
-    model.fit(X, y)
+    weights = df["SampleWeight"]
 
+    model = LinearRegression()
+    model.fit(X, y, sample_weight=weights)
     logger.info("Model training complete.")
 
-    # Predict future weights for 30, 60, and 90 days into the future
+    # Predict for 30, 60, 90 days into the future
     last_day = df["DaysFromStart"].max()
-    last_date = df["date"].max()
     future_days = [30, 60, 90]
     future_days_absolute = [last_day + d for d in future_days]
     X_future = pd.DataFrame(future_days_absolute, columns=["DaysFromStart"])
     predictions = model.predict(X_future)
 
+    # Create prediction DataFrame
     prediction_df = pd.DataFrame({
         "DaysFromToday": future_days,
         "PredictedWeightKg": predictions,
     })
     prediction_df["PredictedWeightLbs"] = prediction_df["PredictedWeightKg"] * KG_TO_LBS
-    prediction_df["date"] = last_date + pd.to_timedelta(prediction_df["DaysFromToday"], unit="D")
+
+    # Estimate future dates
+    prediction_df["date"] = df["date"].max() + pd.to_timedelta(prediction_df["DaysFromToday"], unit="D")
 
     return prediction_df
 

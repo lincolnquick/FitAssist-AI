@@ -21,6 +21,7 @@ data/*.zip
 # Output files may contain private health data
 output/*.txt
 output/*.csv
+output/**/*.png
 
 # Jupyter checkpoints (if added)
 *.ipynb_checkpoints
