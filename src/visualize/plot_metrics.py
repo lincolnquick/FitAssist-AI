@@ -1,12 +1,16 @@
 # src/visualize/plot_metrics.py
+
 """
+plot_metrics.py
+
 Generates grouped and enhanced time series plots for health metrics over
 various time periods (full, yearly, monthly). Groups include:
 - Weight & Body Composition
 - Calories & Energy Balance
 - Activity (Steps and Distance)
 
-Each plot is automatically saved to the output directory structure.
+Uses smoothed 'Trend' metrics when available to reduce visual noise and
+fill in gaps caused by missing raw data.
 
 Author: Lincoln Quick
 """
@@ -26,7 +30,7 @@ PLOT_GROUPS = {
     "activity": ["StepCount", "DistanceWalkingRunning"],
 }
 
-# Map raw metrics to their smoothed "Trend" versions, if available
+# Map raw metrics to their smoothed "Trend" versions
 TREND_MAPPING = {
     'Weight': 'TrendWeight',
     'BodyFatPercentage': 'TrendBodyFatPercentage',
@@ -41,7 +45,7 @@ TREND_MAPPING = {
 
 def plot_metrics(
         df: pd.DataFrame,
-        output_dir: str = "output/plots", 
+        output_dir: str = "output/plots",
         periods: list[str] = ["full", "year", "month"],
         use_imperial_units: bool = False):
     """
@@ -51,24 +55,34 @@ def plot_metrics(
         df (pd.DataFrame): Cleaned health data with a datetime 'date' column.
         output_dir (str): Root output folder to save plots.
         periods (list[str]): Which time periods to generate plots for ('full', 'year', 'month').
+        use_imperial_units (bool): Whether to display weight in pounds.
     """
     os.makedirs(output_dir, exist_ok=True)
     df = df.copy()
     df["date"] = pd.to_datetime(df["date"])
 
+    # Log missing values for diagnostics
+    for trend_metric in ["TrendWeight", "TrendBodyFatPercentage", "TrendLeanBodyMass"]:
+        if trend_metric in df.columns and df[trend_metric].isna().sum() > 0:
+            missing_dates = df[df[trend_metric].isna()]["date"].tolist()
+            logger.debug(f"{trend_metric} has missing values on: {missing_dates}")
+
+    # Convert mass units if needed
     if use_imperial_units:
-        if "Weight" in df.columns:
-            df["Weight"] = df["Weight"] * KG_TO_LBS
-        if "LeanBodyMass" in df.columns:
-            df["LeanBodyMass"] = df["LeanBodyMass"] * KG_TO_LBS
+        if "TrendWeight" in df.columns:
+            df["TrendWeight"] *= KG_TO_LBS
+        if "TrendLeanBodyMass" in df.columns:
+            df["TrendLeanBodyMass"] *= KG_TO_LBS
+
     for group_name, metrics in PLOT_GROUPS.items():
         available_metrics = []
         for m in metrics:
             trend_col = TREND_MAPPING.get(m, m)
-            if trend_col in df.columns:
+            if trend_col in df.columns and df[trend_col].notna().sum() > 0:
                 available_metrics.append(trend_col)
+
         if not available_metrics:
-            logger.warning(f"No available metrics found for group: {group_name}")
+            logger.warning(f"No valid metrics found for group: {group_name}")
             continue
 
         if "full" in periods:
@@ -95,6 +109,7 @@ def _plot_time_series(df: pd.DataFrame, metrics: list[str], group_name: str, out
         group_name (str): Name of the plot group (used in filename).
         output_dir (str): Output folder path.
         label (str): Time period label (e.g., "full", "2025", "2025-04").
+        use_imperial_units (bool): Whether to show weight in pounds.
     """
     if df.empty:
         logger.warning(f"Skipping empty data for {group_name} - {label}")
@@ -108,11 +123,11 @@ def _plot_time_series(df: pd.DataFrame, metrics: list[str], group_name: str, out
 
         for col in metrics:
             if col == "TrendWeight":
-                label = "Weight (lb)" if use_imperial_units else "Weight (kg)"
-                ax1.plot(df["date"], df[col], label=label, color="tab:blue", linewidth=2)
+                label_text = "Weight (lb)" if use_imperial_units else "Weight (kg)"
+                ax1.plot(df["date"], df[col], label=label_text, color="tab:blue", linewidth=2)
             elif col == "TrendLeanBodyMass":
-                label = "Lean Body Mass (lb)" if use_imperial_units else "Lean Body Mass (kg)"
-                ax1.plot(df["date"], df[col], label=label, color="tab:green", linewidth=2)
+                label_text = "Lean Body Mass (lb)" if use_imperial_units else "Lean Body Mass (kg)"
+                ax1.plot(df["date"], df[col], label=label_text, color="tab:green", linewidth=2)
             elif col == "TrendBodyFatPercentage":
                 ax2.plot(df["date"], df[col] * 100, label="Body Fat (%)", color="tab:red", linewidth=2, linestyle="--")
 
@@ -127,17 +142,17 @@ def _plot_time_series(df: pd.DataFrame, metrics: list[str], group_name: str, out
         ax = plt.gca()
         if "TrendBasalCaloriesBurned" in metrics and "TrendActiveCaloriesBurned" in metrics:
             ax.stackplot(df["date"],
-                        df["TrendBasalCaloriesBurned"],
-                        df["TrendActiveCaloriesBurned"],
-                        labels=["Basal", "Active"],
-                        colors=["#9ecae1", "#6baed6"])
+                         df["TrendBasalCaloriesBurned"],
+                         df["TrendActiveCaloriesBurned"],
+                         labels=["Basal", "Active"],
+                         colors=["#9ecae1", "#6baed6"])
         if "TrendCaloriesIn" in metrics:
             ax.plot(df["date"], df["TrendCaloriesIn"], label="Calories In", color="tab:orange", linewidth=2)
         if "TrendNetCalories" in metrics:
             ax.plot(df["date"], df["TrendNetCalories"], label="Net Calories", color="tab:red", linestyle="--", linewidth=2)
 
         ax.set_ylabel("Calories")
-        plt.legend()
+        ax.legend()
 
     elif group_name == "activity":
         ax1 = plt.gca()
@@ -156,7 +171,6 @@ def _plot_time_series(df: pd.DataFrame, metrics: list[str], group_name: str, out
         ax1.legend(lines + lines2, labels + labels2, loc="upper left")
 
     else:
-        # Fallback: Simple line plot
         for col in metrics:
             if col in df.columns:
                 plt.plot(df["date"], df[col], label=col, linewidth=2)
