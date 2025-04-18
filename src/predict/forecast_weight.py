@@ -14,7 +14,7 @@ from src.modeling.train_baseline_model import train_weight_delta_model
 
 logger = logging.getLogger(__name__)
 
-def forecast_from_cleaned_csv(path: str = "output/cleaned_metrics.csv"):
+def forecast_from_cleaned_csv(path: str = "output/cleaned_metrics.csv", days_list: list[int] = [7, 14, 30, 60, 90, 120, 150, 180]) -> dict:
     """
     Loads cleaned metrics, trains a delta model, and generates a weight forecast.
     """
@@ -38,7 +38,7 @@ def forecast_from_cleaned_csv(path: str = "output/cleaned_metrics.csv"):
     logger.info(f"Recent net calorie trend: {recent_values['NetCaloriesRolling']:.0f} kcal/day")
 
     forecast = {}
-    for days in [30, 60, 90]:
+    for days in days_list:
         # Scale the predicted delta from model’s window size to requested days
         predicted_delta = model.predict([list(recent_values.values())])[0] * (days / window)
         forecast[days] = current_weight + predicted_delta

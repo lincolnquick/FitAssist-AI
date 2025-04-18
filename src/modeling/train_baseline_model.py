@@ -47,9 +47,9 @@ def train_weight_delta_model(df: pd.DataFrame, window: int = 21):
     X = features[valid]
     y = target[valid]
 
-    logger.info(f"Training set size: {len(X)} rows")
-    logger.info(f"Features: {X.columns.tolist()}")
-    logger.info(f"Target: WeightDelta over {window} days")
+    logger.debug(f"Training set size: {len(X)} rows")
+    logger.debug(f"Features: {X.columns.tolist()}")
+    logger.debug(f"Target: WeightDelta over {window} days")
 
     model = XGBRegressor()
     model.fit(X, y)

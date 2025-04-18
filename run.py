@@ -67,7 +67,14 @@ def main():
 
         # Step 6: Forecasting
         logger.info("Forecasting weight trajectory...")
-        forecast_from_cleaned_csv()
+        forecast = forecast_from_cleaned_csv()
+        if forecast:
+            print("\n--- Weight Forecast ---")
+            for days, weight in forecast.items():
+                print(f"{days} days: {weight:.2f} kg")
+        else:
+            logger.error("Weight forecast failed.")
+        
 
     except Exception as e:
         logger.error(f"Execution failed: {e}")

@@ -33,6 +33,15 @@ def load_cleaned_metrics(path: str = "output/cleaned_metrics.csv") -> pd.DataFra
     df = pd.read_csv(path, parse_dates=["date"])
     logger.info(f"Loaded cleaned metrics from: {path}")
 
+    # Inspect the loaded DataFrame
+    logger.debug("--- Loaded DataFrame Inspection ---")
+    logger.debug(f"Shape: {df.shape}")
+    logger.debug(f"Columns: {df.columns.tolist()}")
+    logger.debug(f"Weight NaN count: {df['Weight'].isnull().sum()}")
+    logger.debug(f"First 5 rows:\n{df.head()}")
+    logger.debug(f"Last 5 rows:\n{df.tail()}")
+    logger.debug(f"Date range: {df['date'].min()} to {df['date'].max()}")
+
     missing = set(REQUIRED_COLUMNS) - set(df.columns)
     if missing:
         raise ValueError(f"Missing required columns in {path}: {missing}")
