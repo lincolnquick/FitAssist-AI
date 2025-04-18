@@ -1,6 +1,6 @@
 # FitAssist AI
 
-**FitAssist AI** is a predictive weight forecasting and personalized goal planning assistant. It uses AI techniques to analyze health data exported from Apple Health and predict future weight trends. The system adjusts for metabolic adaptation—such as reduced non-exercise activity thermogenesis (NEAT), decreased thermic effect of food (TEF), and improved exercise efficiency—and recommends actionable strategies for reaching user-defined goals in a safe and realistic manner.
+**FitAssist AI** is a predictive health forecasting system powered by AI techniques. It analyzes Apple Health export data to visualize trends, forecast future metrics like weight or TDEE, and identify meaningful correlations between calorie balance, activity, and body composition. The system supports user-driven forecasting of any supported metric and logs predictions to a session file for review.
 
 This project is developed as part of the **CSC510: Foundations of Artificial Intelligence** portfolio at **Colorado State University Global**.
 
@@ -8,13 +8,22 @@ This project is developed as part of the **CSC510: Foundations of Artificial Int
 
 ## Features
 
--   Parses and cleans Apple Health data.
--   Calculates key metrics like Total Daily Energy Expenditure (TDEE) and Net Calories.
--   Predicts future weight trends based on historical data.
--   Provides summaries and visualizations of your health data.
--   Analyzes relationships between various health metrics (e.g., calorie balance and weight change).
--   Estimates caloric efficiency (calories per pound of weight change).
--   Analyzes changes in body composition (fat mass vs. lean mass).
+- Parses and deduplicates Apple Health export XML data.
+- Calculates and smooths daily metrics such as:
+  - Total Daily Energy Expenditure (TDEE)
+  - Net Calories (Calories In – TDEE)
+  - Basal and Active Calories Burned
+  - Step Count and Distance
+- Visualizes data across full history, calendar years, and months.
+- Generates descriptive summaries, including deltas and rolling statistics.
+- Analyzes correlations across all metrics and their trends.
+- Estimates caloric efficiency (kcal per pound of weight lost).
+- Detects changes in body composition over time.
+- Trains XGBoost models for:
+  - Weight change prediction
+  - Generalized forecasting of any metric (e.g., LeanBodyMass, TDEE)
+- Forecasts over custom time intervals or spans (e.g., 90 days or [7, 14, 30, 60]).
+- Logs all forecast results to `output/forecast_session.txt`.
 
 ---
 
@@ -22,25 +31,33 @@ This project is developed as part of the **CSC510: Foundations of Artificial Int
 
 ```
 FitAssist-AI/
-|── config/                   # Configuration constants, safety thresholds, etc.
-├── data/                     # Apple Health XML exports (excluded from version control)
-├── milestones/               # Weekly milestone markdown files
-├── output/                   # Output files from execution for testing
-├── src/                      # Source code modules
-│   ├── parse/                # XML parser for Apple Health data
-│   ├── modeling/             # Weight prediction and metabolic modeling
-│   ├── logic/                # Symbolic planning and goal evaluation (currently limited)
-│   ├── tools/                # Utility scripts
-│   ├── cli/                  # Command-line interface tools
-│   ├── visualize/            # Plotting scripts
-│   ├── analyze/              # Analysis scripts (correlations, efficiency, etc.)
-│   ├── predict/              # Weight forecasting
-│   └── clean/                # Data cleaning
-├── tests/                    # Unit tests
-├── .gitignore                # Excludes sensitive and unnecessary files
-├── LICENSE                   # MIT License
-├── README.md                 # Project overview
-└── REQUIREMENTS.txt          # Python dependencies
+├── config/                     # Constants and thresholds (e.g., unit conversions)
+├── data/                       # Input files (Apple Health export.xml, user info)
+│   ├── export.xml              # Apple Health data (not included in repo)
+│   ├── cleaned_metrics.csv     # Output from parser pipeline
+│   └── user_characteristics.csv # DOB, height, biological sex
+├── milestones/                 # Weekly milestone documentation
+├── output/                     # Generated visualizations, reports, forecast logs
+│   ├── plots/                  # PNG plots by metric and period
+│   ├── summary_report.txt      # Descriptive statistics output
+│   ├── correlation_report.txt  # Ranked metric correlations
+│   ├── caloric_efficiency.csv  # kcal/lb summary
+│   ├── forecast_session.txt    # All user forecasts this session
+│   └── composition_analysis.png/csv # Lean/Fat trends
+├── src/                        # Source modules
+│   ├── analyze/                # Descriptive stats, correlations, efficiency
+│   ├── clean/                  # Smoothing and imputation of missing values
+│   ├── cli/                    # Pipeline scripts (e.g., extract_metrics)
+│   ├── modeling/               # XGBoost regression training
+│   ├── parse/                  # Apple Health XML parsing
+│   ├── predict/                # Forecasting logic (weight and general metrics)
+│   ├── tools/                  # Utility modules (e.g., user info, energy)
+│   └── visualize/              # Plot generation
+├── tests/                      # Unit tests (WIP)
+├── run.py                      # Main script to run full analysis + forecasting
+├── README.md                   # This file
+├── LICENSE
+└── REQUIREMENTS.txt            # Python dependencies
 ```
 ---
 
@@ -80,48 +97,40 @@ pip install -r REQUIREMENTS.txt
 
 ### Step 2: Run FitAssist AI
 
-There are two main ways to use FitAssist AI:
 
-#### 1.  Run the main script (`run.py`)
-
-This script currently focuses on weight forecasting. It will:
-
--   Load and clean your Apple Health data.
--   Train a weight prediction model.
--   Forecast your weight trajectory.
-
-To run it:
+####  Run the main script (`run.py`)
 
 ```bash
-source venv/bin/activate  # If using a virtual environment
 python run.py
 ```
 
-#### 2.  Use the ```extract_metrics.py``` CLI tool 
-This tool allows you to extract and clean your Apple Health data, saving it to a CSV file for further analysis.
+## Usage Overview
 
+Upon running run.py, the system will:
+ - Detect if Apple Health data has changed and reprocess if needed.
+ - Ensure user profile is defined (height, sex, DOB).
+ - Generate plots, summary statistics, correlations, and caloric efficiency.
+ - Prompt you to forecast a health metric.
+
+You can:
+ - Enter a metric name or number (e.g., Weight or 8).
+ - Enter a single number (e.g., 90) to predict daily for the next 90 consecutive days.
+ - Enter a list (e.g., [7,14,30,60]) to forecast specific intervals.
+
+All predictions are logged to output/forecast_session.txt.
+
+⸻
+
+### Example Forecast Interaction
 ```bash
-source venv/bin/activate  # If using a virtual environment
-python -m src.cli.extract_metrics [optional path/to/export.xml]
+Enter the metric to forecast (e.g., Weight or 8): 8
+Enter days to forecast (e.g., 30 or [7,14,30]): 90
 ```
-
-This will create a file named ```cleaned_metrics.csv``` in the ```output/` directory.
-
-
-### Example Output
-
-```bash
-=== FitAssist AI ===
-Loading Apple Health data...
-Training model...
-MAE: 1.23 kg
-Enter your target weight (kg): 72
-Enter your target date (YYYY-MM-DD): 2025-07-01
-
-Predicted weight on 2025-07-01: 74.3 kg
-Your goal: 72.0 kg
-You're predicted to be 2.3 kg above your goal.
-```
+Outputs:
+ - Daily predictions from Day 1 to Day 90
+ - Features used in training
+ - R^2 score of the model
+ - Appends forecast to session log
 
 ## Portfolio Milestones
 
