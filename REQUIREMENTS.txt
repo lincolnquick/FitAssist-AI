@@ -40,6 +40,7 @@ requests==2.32.3
 rpds-py==0.24.0
 scikit-learn==1.6.1
 scipy==1.13.1
+seaborn==0.13.2
 six==1.17.0
 smmap==5.0.2
 streamlit==1.44.1
