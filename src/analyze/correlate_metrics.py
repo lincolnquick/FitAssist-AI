@@ -60,21 +60,31 @@ def correlate_metrics(df: pd.DataFrame, output_dir: str = "output") -> None:
     os.makedirs(output_dir, exist_ok=True)
 
     # Derived metrics
-    df = df.copy()
+    df = df.sort_values("date").set_index("date").copy()
     df["FatMass"] = df["Weight"] * df["BodyFatPercentage"]
     df["LeanMass"] = df["LeanBodyMass"]
     df["TDEE"] = df["BasalCaloriesBurned"] + df["ActiveCaloriesBurned"]
     df["NetCalories"] = df["CaloriesIn"] - df["TDEE"]
-    df["WeightDelta"] = df["Weight"].diff()
-    df["FatMassDelta"] = df["FatMass"].diff()
-    df["LeanMassDelta"] = df["LeanMass"].diff()
-    df["NetCalDelta"] = df["NetCalories"].diff()
+    df["BasalMinusIntake"] = df["BasalCaloriesBurned"] - df["CaloriesIn"]
+
+
+    # Replace deltas with 21-day rolling averages
+    rolling = df[["Weight", "FatMass", "LeanMass", "NetCalories"]].rolling(window=21, min_periods=11)
+
+    df["WeightDelta"] = rolling["Weight"].apply(lambda x: x.iloc[-1] - x.iloc[0])
+    df["FatMassDelta"] = rolling["FatMass"].apply(lambda x: x.iloc[-1] - x.iloc[0])
+    df["LeanMassDelta"] = rolling["LeanMass"].apply(lambda x: x.iloc[-1] - x.iloc[0])
+    df["NetCalDelta"] = rolling["NetCalories"].sum()  # total net deficit over 21 days
+
+    # Drop rows with insufficient data
+    df = df.dropna(subset=["WeightDelta", "FatMassDelta", "LeanMassDelta", "NetCalDelta"])
 
     correlation_sets = {
         "Energy Balance": [
             ("NetCalories", "WeightDelta"),
             ("CaloriesIn", "TDEE"),
             ("TDEE", "WeightDelta"),
+            ("BasalMinusIntake", "WeightDelta"),
         ],
         "Body Composition": [
             ("Weight", "FatMass"),
