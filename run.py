@@ -192,63 +192,83 @@ def main():
         # Step 8: Forecasting
         logger.info("Starting generalized forecasting...")
 
+        forecast_log_path = os.path.join(output_dir, "forecast_session.txt")
+        forecast_log_lines = []
         available_trends = [col for col in df.columns if col.startswith("Trend")]
         metric_choices = sorted(set(col.replace("Trend", "") for col in available_trends))
 
-        print("\n--- Forecast Setup ---")
-        print("Available metrics to forecast:")
-        for i, m in enumerate(metric_choices, 1):
-            print(f"{i}. {m}")
+        while True:
+            print("\n--- Forecast Setup ---")
+            print("Available metrics to forecast (enter 'q' to quit):")
+            for i, m in enumerate(metric_choices, 1):
+                print(f"{i}. {m}")
 
-        selected_input = input("\nEnter the metric to forecast (e.g., Weight or 8): ").strip()
+            selected_input = input("\nEnter the metric to forecast (e.g., Weight or 8),  (enter 'q' to quit): ").strip()
+            if selected_input.lower() == "q":
+                break
 
-        # Check if input is a digit and map to index
-        if selected_input.isdigit():
-            index = int(selected_input) - 1
-            if 0 <= index < len(metric_choices):
-                selected = metric_choices[index]
+            # Determine the metric
+            if selected_input.isdigit():
+                index = int(selected_input) - 1
+                if 0 <= index < len(metric_choices):
+                    selected = metric_choices[index]
+                else:
+                    logger.error(f"Invalid number selection: {selected_input}")
+                    continue
+            elif selected_input in metric_choices:
+                selected = selected_input
             else:
-                logger.error(f"Invalid number selection: {selected_input}")
-                return
-        elif selected_input in metric_choices:
-            selected = selected_input
-        else:
-            logger.error(f"Invalid metric: {selected_input}")
-            return
+                logger.error(f"Invalid metric: {selected_input}")
+                continue
 
-        # Get forecast days from user
-        days_input = input("Enter days to forecast (e.g., 30 or [7,14,30]): ").strip()
+            # Get forecast days
+            days_input = input("Enter days to forecast (e.g., 30 or [7,14,30]): ").strip()
+            try:
+                if days_input.startswith("[") and days_input.endswith("]"):
+                    forecast_days = ast.literal_eval(days_input)
+                    if not all(isinstance(day, int) and day > 0 for day in forecast_days):
+                        raise ValueError
+                else:
+                    span = int(days_input)
+                    if span <= 0:
+                        raise ValueError
+                    forecast_days = list(range(1, span + 1))
+            except Exception:
+                logger.error("Invalid forecast day format. Use a number (e.g., 30) or list (e.g., [7,14,30])")
+                continue
 
-        try:
-            if days_input.startswith("[") and days_input.endswith("]"):
-                forecast_days = ast.literal_eval(days_input)
-                if not all(isinstance(day, int) and day > 0 for day in forecast_days):
-                    raise ValueError
-            else:
-                span = int(days_input)
-                if span <= 0:
-                    raise ValueError
-                forecast_days = list(range(1, span + 1))  # Predict every day from 1 to span
-        except Exception:
-            logger.error("Invalid forecast day format. Use a number (e.g., 30) or list (e.g., [7,14,30])")
-            return
+            # Forecast
+            try:
+                result = forecast_metric(df, target_metric=selected, forecast_days=forecast_days)
+                if result:
+                    forecast, used_features, r2 = result
+                    header = f"\n--- {selected} Forecast ---"
+                    logger.info(header.strip("-"))
+                    print(header)
 
-        try:
-            result = forecast_metric(df, target_metric=selected, forecast_days=forecast_days)
-            if result:
-                forecast, used_features, r2 = result
+                    lines = [header]
+                    for d, val in forecast.items():
+                        if use_imperial and selected in ["Weight", "LeanBodyMass"]:
+                            line = f"{d} days: {val * KG_TO_LBS:.2f} lbs"
+                        else:
+                            line = f"{d} days: {val:.2f}"
+                        print(line)
+                        lines.append(line)
 
-                print(f"\n--- {selected} Forecast ---")
-                for d, val in forecast.items():
-                    if use_imperial and selected in ["Weight", "LeanBodyMass"]:
-                        print(f"{d} days: {val * KG_TO_LBS:.2f} lbs")
-                    else:
-                        print(f"{d} days: {val:.2f}")
+                    features_line = f"\nFeatures used: {', '.join(used_features)}"
+                    r2_line = f"Model R² score (train): {r2:.3f}"
+                    print(features_line)
+                    print(r2_line)
+                    lines.extend([features_line, r2_line, ""])
+                    forecast_log_lines.extend(lines)
+            except Exception as e:
+                logger.error(f"Forecasting failed: {e}")
 
-                print(f"\nFeatures used: {', '.join(used_features)}")
-                print(f"Model R² score (train): {r2:.3f}")
-        except Exception as e:
-            logger.error(f"Forecasting failed: {e}")
+        # Write the session forecast to output file
+        if forecast_log_lines:
+            with open(forecast_log_path, "w") as f:
+                f.write("\n".join(forecast_log_lines))
+            logger.info(f"Saved session forecast results to {forecast_log_path}")
 
     except Exception as e:
         logger.error(f"Execution failed: {e}")
