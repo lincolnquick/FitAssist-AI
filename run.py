@@ -1,21 +1,37 @@
 """
 run.py
 
-Entry point for analyzing and visualizing Apple Health metrics.
+Main entry point for analyzing, visualizing, and forecasting health metrics from Apple Health data.
+
+This script performs the following tasks:
+1. Checks freshness of data/export.xml vs data/cleaned_metrics.csv.
+2. If export.xml is newer or cleaned_metrics.csv is missing, triggers the extract pipeline.
+3. Ensures user_characteristics.csv exists (DOB, sex, height), prompting the user if necessary.
+4. Loads cleaned data and generates:
+    - Visualizations (full, yearly, monthly)
+    - Descriptive statistics
+    - Correlation reports
+    - Caloric efficiency trends
+    - Body composition analysis
+    - Weight forecast
 
 Author: Lincoln Quick
 """
 
 import os
+import glob
 import logging
-import time
+import subprocess
+
 from data.load_data import load_cleaned_metrics
+from src.tools.user_info import load_or_prompt_user_info
 from src.visualize.plot_metrics import plot_metrics
 from src.analyze.describe_data import describe_data
 from src.analyze.correlate_metrics import correlate_metrics
 from src.analyze.caloric_efficiency import analyze_efficiency
 from src.analyze.body_composition import analyze_body_composition
 from src.predict.forecast_weight import forecast_from_cleaned_csv
+from config.constants import KG_TO_LBS
 
 # Configure logging
 logging.basicConfig(
@@ -25,59 +41,168 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+def plots_are_fresh(plot_dir: str, data_path: str) -> bool:
+    """
+    Returns True if any plot PNG file is newer than the cleaned metrics CSV.
+
+    Parameters:
+        plot_dir (str): Root plot directory.
+        data_path (str): Path to cleaned_metrics.csv.
+
+    Returns:
+        bool: True if at least one plot is newer than the data file.
+    """
+    if not os.path.exists(data_path):
+        return False
+
+    data_mtime = os.path.getmtime(data_path)
+    plot_files = glob.glob(os.path.join(plot_dir, "**", "*.png"), recursive=True)
+
+    if not plot_files:
+        return False
+
+    for plot in plot_files:
+        if os.path.getmtime(plot) > data_mtime:
+            return True  # At least one plot is newer → skip regeneration
+
+    return False  # All plots are older → need to regenerate
+
+def file_is_fresher(newer: str, older: str) -> bool:
+    """
+    Returns True if `newer` exists and is more recent than `older`.
+    """
+    return os.path.exists(newer) and (
+        not os.path.exists(older) or os.path.getmtime(newer) > os.path.getmtime(older)
+    )
+
+
+def run_extraction():
+    """
+    Runs the extract_metrics.py pipeline as a module to ensure imports work correctly.
+    """
+    logger.info("Running data extraction pipeline from Apple Health export...")
+    try:
+        result = subprocess.run(
+            ["python", "-m", "src.cli.extract_metrics"],
+            check=True
+        )
+        logger.info("Extraction complete.")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to extract metrics: {e}")
+        raise
+
+def format_summary_lines(lines: list[str], use_imperial: bool = False) -> list[str]:
+    """
+    Optionally converts metric values to imperial units for display.
+    Only applies to weight-related metrics (e.g., Weight, LeanBodyMass).
+
+    Args:
+        lines (list[str]): Raw summary lines.
+        use_imperial (bool): Whether to convert weight values to pounds.
+
+    Returns:
+        list[str]: Formatted summary lines for display.
+    """
+    converted = []
+    for line in lines:
+        if use_imperial and any(kw in line for kw in ["Weight", "LeanBodyMass"]):
+            parts = line.split(":")
+            try:
+                value = float(parts[1].strip().split()[0])
+                lbs = value * 2.20462
+                converted.append(f"{parts[0]:<35}: {lbs:.2f} lbs")
+            except Exception:
+                converted.append(line)
+        else:
+            converted.append(line)
+    return converted
 
 def main():
-    csv_path = "output/cleaned_metrics.csv"
+    data_dir = "data"
     output_dir = "output"
     plot_dir = os.path.join(output_dir, "plots")
+
+    csv_path = os.path.join(data_dir, "cleaned_metrics.csv")
+    export_path = os.path.join(data_dir, "export.xml")
+    user_info_path = os.path.join(data_dir, "user_characteristics.csv")
+
     use_imperial = True
     plot_periods = ["full", "year", "month"]
 
+    # Step 1: Check if cleaned metrics need to be regenerated
+    if file_is_fresher(export_path, csv_path):
+        logger.info("Detected newer export.xml or missing cleaned_metrics.csv.")
+        run_extraction()
+    else:
+        logger.info("Using existing cleaned_metrics.csv.")
+
     if not os.path.exists(csv_path):
         logger.error(f"Missing required file: {csv_path}")
-        logger.info("Please run extract_metrics.py to generate cleaned_metrics.csv first.")
+        logger.info("Please make sure export.xml exists and try again.")
+        return
+
+    # Step 2: Ensure user info is available
+    user_info = load_or_prompt_user_info(user_info_path)
+    if not user_info:
+        logger.error("Unable to load or generate user characteristics.")
         return
 
     try:
         df = load_cleaned_metrics(csv_path)
 
-        # # Step 1: Visualization
-        logger.info("Generating visualizations...")
-        plot_metrics(df, output_dir=plot_dir, periods=plot_periods, use_imperial_units=use_imperial)
-        logger.info("All plots generated successfully.")
+        # Step 3: Visualization
+        if plots_are_fresh(plot_dir, csv_path):
+            logger.info(f"Existing plots are up-to-date. Skipping plot generation. See: {plot_dir}")
+        else:
+            logger.info("Generating visualizations...")
+            plot_metrics(df, output_dir=plot_dir, periods=plot_periods, use_imperial_units=use_imperial)
+            logger.info("All plots generated successfully.")
 
-        # # Step 2: Description
+        # Step 4: Description
         logger.info("Analyzing descriptive statistics...")
-        describe_data(df=df, output_dir=output_dir)
+        summary_lines = describe_data(df=df, output_dir=output_dir)
+        print("")
+        for line in format_summary_lines(summary_lines, use_imperial=use_imperial):
+            print(line)
 
-        # # Step 3: Correlation
+        print("")
+        # Step 5: Correlation
         logger.info("Generating correlation report...")
-        correlate_metrics(df=df, output_dir=output_dir)
+        corr_lines = correlate_metrics(df=df, output_dir=output_dir)
+        for line in corr_lines:
+            print(line)
 
-        # # Step 4: Efficiency analysis
+        # Step 6: Efficiency analysis
         logger.info("Estimating caloric efficiency...")
         eff_result = analyze_efficiency(df)
         monthly_eff = eff_result.get("monthly_summary")
+        
         if monthly_eff is not None:
+            print("\n--- Monthly Caloric Efficiency ---")
             print(monthly_eff[["CaloriesPerPound"]])
 
-        # # Step 5: Body composition
+        print("")
+        
+        # Step 7: Body composition
         logger.info("Analyzing body composition trends...")
         analyze_body_composition(df)
 
-        # Step 6: Forecasting
+        # Step 8: Forecasting
         logger.info("Forecasting weight trajectory...")
         forecast = forecast_from_cleaned_csv()
         if forecast:
             print("\n--- Weight Forecast ---")
             for days, weight in forecast.items():
-                print(f"{days} days: {weight:.2f} kg")
+                if use_imperial:
+                    print(f"{days} days: {weight * KG_TO_LBS:.2f} lbs")
+                else:
+                    print(f"{days} days: {weight:.2f} kg")
         else:
             logger.error("Weight forecast failed.")
-        
 
     except Exception as e:
         logger.error(f"Execution failed: {e}")
+
 
 if __name__ == "__main__":
     main()

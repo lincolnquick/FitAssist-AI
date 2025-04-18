@@ -19,7 +19,7 @@ Usage:
 If no path is provided, it defaults to "data/export.xml".
 
 Output:
-    Saves cleaned and preprocessed data to: output/cleaned_metrics.csv
+    Saves cleaned and preprocessed data to: data/cleaned_metrics.csv
 """
 import sys
 import logging
@@ -53,7 +53,7 @@ def main():
     cleaned_df = smooth_and_impute(df)
 
     # Export cleaned metrics to CSV
-    output_path = "output/cleaned_metrics.csv"
+    output_path = "data/cleaned_metrics.csv"
     try:
         cleaned_df.to_csv(output_path, index=False)
         logger.info(f"Cleaned metrics successfully saved to: {output_path}")

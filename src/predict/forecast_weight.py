@@ -66,8 +66,8 @@ def forecast_from_cleaned_csv(
         scaled_delta = predicted_delta * (days / window)
         forecast[days] = current_weight + scaled_delta
 
-    logger.info("\n--- Weight Forecast ---")
+    logger.debug("\n--- Weight Forecast ---")
     for days, weight in forecast.items():
-        logger.info(f"{days} days: {weight:.2f} kg")
+        logger.debug(f"{days} days: {weight:.2f} kg")
 
     return forecast

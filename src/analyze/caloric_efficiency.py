@@ -87,7 +87,7 @@ def analyze_efficiency(df: pd.DataFrame, output_dir: str = "output") -> dict:
     logger.info(f"Saved efficiency plot to {plot_path}")
 
     # === Monthly Efficiency Summary ===
-    monthly = df.resample("M").agg({
+    monthly = df.resample("ME").agg({
         "TrendNetCalories": "sum",
         "TrendWeight": ["first", "last"]
     })
