@@ -19,6 +19,7 @@ Author: Lincoln Quick
 """
 
 import os
+import ast
 import glob
 import logging
 import subprocess
@@ -31,6 +32,7 @@ from src.analyze.correlate_metrics import correlate_metrics
 from src.analyze.caloric_efficiency import analyze_efficiency
 from src.analyze.body_composition import analyze_body_composition
 from src.predict.forecast_weight import forecast_from_cleaned_csv
+from src.predict.forecast_metric import forecast_metric
 from config.constants import KG_TO_LBS
 
 # Configure logging
@@ -188,17 +190,65 @@ def main():
         analyze_body_composition(df)
 
         # Step 8: Forecasting
-        logger.info("Forecasting weight trajectory...")
-        forecast = forecast_from_cleaned_csv()
-        if forecast:
-            print("\n--- Weight Forecast ---")
-            for days, weight in forecast.items():
-                if use_imperial:
-                    print(f"{days} days: {weight * KG_TO_LBS:.2f} lbs")
-                else:
-                    print(f"{days} days: {weight:.2f} kg")
+        logger.info("Starting generalized forecasting...")
+
+        available_trends = [col for col in df.columns if col.startswith("Trend")]
+        metric_choices = sorted(set(col.replace("Trend", "") for col in available_trends))
+
+        print("\n--- Forecast Setup ---")
+        print("Available metrics to forecast:")
+        for i, m in enumerate(metric_choices, 1):
+            print(f"{i}. {m}")
+
+        selected_input = input("\nEnter the metric to forecast (e.g., Weight or 8): ").strip()
+
+        # Check if input is a digit and map to index
+        if selected_input.isdigit():
+            index = int(selected_input) - 1
+            if 0 <= index < len(metric_choices):
+                selected = metric_choices[index]
+            else:
+                logger.error(f"Invalid number selection: {selected_input}")
+                return
+        elif selected_input in metric_choices:
+            selected = selected_input
         else:
-            logger.error("Weight forecast failed.")
+            logger.error(f"Invalid metric: {selected_input}")
+            return
+
+        # Get forecast days from user
+        days_input = input("Enter days to forecast (e.g., 30 or [7,14,30]): ").strip()
+
+        try:
+            if days_input.startswith("[") and days_input.endswith("]"):
+                forecast_days = ast.literal_eval(days_input)
+                if not all(isinstance(day, int) and day > 0 for day in forecast_days):
+                    raise ValueError
+            else:
+                span = int(days_input)
+                if span <= 0:
+                    raise ValueError
+                forecast_days = list(range(1, span + 1))  # Predict every day from 1 to span
+        except Exception:
+            logger.error("Invalid forecast day format. Use a number (e.g., 30) or list (e.g., [7,14,30])")
+            return
+
+        try:
+            result = forecast_metric(df, target_metric=selected, forecast_days=forecast_days)
+            if result:
+                forecast, used_features, r2 = result
+
+                print(f"\n--- {selected} Forecast ---")
+                for d, val in forecast.items():
+                    if use_imperial and selected in ["Weight", "LeanBodyMass"]:
+                        print(f"{d} days: {val * KG_TO_LBS:.2f} lbs")
+                    else:
+                        print(f"{d} days: {val:.2f}")
+
+                print(f"\nFeatures used: {', '.join(used_features)}")
+                print(f"Model R² score (train): {r2:.3f}")
+        except Exception as e:
+            logger.error(f"Forecasting failed: {e}")
 
     except Exception as e:
         logger.error(f"Execution failed: {e}")
