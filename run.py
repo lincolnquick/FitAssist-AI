@@ -16,6 +16,7 @@ from src.visualize.plot_metrics import plot_metrics
 from src.analyze.describe_data import describe_data
 from src.analyze.correlate_metrics import correlate_metrics
 from src.analyze.caloric_efficiency import analyze_efficiency
+from src.analyze.body_composition import analyze_body_composition
 
 # Configure logging
 logging.basicConfig(
@@ -56,8 +57,12 @@ def main():
         monthly_eff = eff_result["monthly_summary"]
         print(monthly_eff[["CaloriesPerPound"]])
 
+        df = load_cleaned_metrics(csv_path)
+        composition_df = analyze_body_composition(df)
+        logger.info("Body composition analysis complete.")
+
     except Exception as e:
-        logger.error(f"Visualization failed: {e}")
+        logger.error(f"Execution failed: {e}")
 
 if __name__ == "__main__":
     main()
