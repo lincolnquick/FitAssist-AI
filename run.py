@@ -1,22 +1,21 @@
 """
 run.py
 
-Entry point for generating health metric visualizations from cleaned data.
-
-Checks for the presence of cleaned CSV data and uses plotting modules
-to generate time series visualizations.
+Entry point for analyzing and visualizing Apple Health metrics.
 
 Author: Lincoln Quick
 """
 
 import os
 import logging
+import time
 from data.load_data import load_cleaned_metrics
 from src.visualize.plot_metrics import plot_metrics
 from src.analyze.describe_data import describe_data
 from src.analyze.correlate_metrics import correlate_metrics
 from src.analyze.caloric_efficiency import analyze_efficiency
 from src.analyze.body_composition import analyze_body_composition
+from src.predict.forecast_weight import forecast_from_cleaned_csv
 
 # Configure logging
 logging.basicConfig(
@@ -26,12 +25,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 def main():
     csv_path = "output/cleaned_metrics.csv"
-    output_path = "output"
-    plot_output_dir = "output/plots"
+    output_dir = "output"
+    plot_dir = os.path.join(output_dir, "plots")
+    use_imperial = True
     plot_periods = ["full", "year", "month"]
-    use_imperial_units = True
 
     if not os.path.exists(csv_path):
         logger.error(f"Missing required file: {csv_path}")
@@ -40,26 +40,34 @@ def main():
 
     try:
         df = load_cleaned_metrics(csv_path)
-        # plot_metrics(df, plot_output_dir, plot_periods, use_imperial_units)
+
+        # # Step 1: Visualization
+        # logger.info("Generating visualizations...")
+        # plot_metrics(df, output_dir=plot_dir, periods=plot_periods, use_imperial_units=use_imperial)
         # logger.info("All plots generated successfully.")
 
-        logger.info("Analyzing metrics...")
-        describe_data(df=df, output_dir=output_path)
+        # # Step 2: Description
+        # logger.info("Analyzing descriptive statistics...")
+        # describe_data(df=df, output_dir=output_dir)
 
-        logger.info("Generating correlation analysis...")
-        correlate_metrics(df=df, output_dir=output_path)
+        # # Step 3: Correlation
+        # logger.info("Generating correlation report...")
+        # correlate_metrics(df=df, output_dir=output_dir)
 
-        df = load_cleaned_metrics(csv_path)
-        # Analyze efficiency of weight loss
-        logger.info("Estimating energy balance efficiency...")
-        eff_result = analyze_efficiency(df)
+        # # Step 4: Efficiency analysis
+        # logger.info("Estimating caloric efficiency...")
+        # eff_result = analyze_efficiency(df)
+        # monthly_eff = eff_result.get("monthly_summary")
+        # if monthly_eff is not None:
+        #     print(monthly_eff[["CaloriesPerPound"]])
 
-        monthly_eff = eff_result["monthly_summary"]
-        print(monthly_eff[["CaloriesPerPound"]])
+        # # Step 5: Body composition
+        # logger.info("Analyzing body composition trends...")
+        # analyze_body_composition(df)
 
-        df = load_cleaned_metrics(csv_path)
-        composition_df = analyze_body_composition(df)
-        logger.info("Body composition analysis complete.")
+        # Step 6: Forecasting
+        logger.info("Forecasting weight trajectory...")
+        forecast_from_cleaned_csv()
 
     except Exception as e:
         logger.error(f"Execution failed: {e}")
