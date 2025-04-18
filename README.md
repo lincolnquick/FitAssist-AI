@@ -8,12 +8,13 @@ This project is developed as part of the **CSC510: Foundations of Artificial Int
 
 ## Features
 
-- Predict weight change over 30, 60, and 90-day intervals
-- Simulate adaptive metabolic changes over time
-- Accept user-defined weight goals and timelines
-- Evaluate goal feasibility based on current trends
-- Recommend personalized adjustments to diet and activity
-- Use symbolic logic, intelligent search, and AI modeling
+-   Parses and cleans Apple Health data.
+-   Calculates key metrics like Total Daily Energy Expenditure (TDEE) and Net Calories.
+-   Predicts future weight trends based on historical data.
+-   Provides summaries and visualizations of your health data.
+-   Analyzes relationships between various health metrics (e.g., calorie balance and weight change).
+-   Estimates caloric efficiency (calories per pound of weight change).
+-   Analyzes changes in body composition (fat mass vs. lean mass).
 
 ---
 
@@ -28,9 +29,13 @@ FitAssist-AI/
 ├── src/                      # Source code modules
 │   ├── parse/                # XML parser for Apple Health data
 │   ├── modeling/             # Weight prediction and metabolic modeling
-│   ├── logic/                # Symbolic planning and goal evaluation
-│   ├── tools/                # Tools used for planning project
-│   └── cli/                  # Command-line interface
+│   ├── logic/                # Symbolic planning and goal evaluation (currently limited)
+│   ├── tools/                # Utility scripts
+│   ├── cli/                  # Command-line interface tools
+│   ├── visualize/            # Plotting scripts
+│   ├── analyze/              # Analysis scripts (correlations, efficiency, etc.)
+│   ├── predict/              # Weight forecasting
+│   └── clean/                # Data cleaning
 ├── tests/                    # Unit tests
 ├── .gitignore                # Excludes sensitive and unnecessary files
 ├── LICENSE                   # MIT License
@@ -75,22 +80,33 @@ pip install -r REQUIREMENTS.txt
 
 ### Step 2: Run FitAssist AI
 
-From the project root, activate your virtual environment:
+There are two main ways to use FitAssist AI:
+
+#### 1.  Run the main script (`run.py`)
+
+This script currently focuses on weight forecasting. It will:
+
+-   Load and clean your Apple Health data.
+-   Train a weight prediction model.
+-   Forecast your weight trajectory.
+
+To run it:
 
 ```bash
-source venv/bin/activate
-```
-Then run the main run script:
-```bash
+source venv/bin/activate  # If using a virtual environment
 python run.py
 ```
 
-This script will:
-- Parse your Apple Health data
-- Aggregate daily values
-- Predict future weight trends based on net calorie balance
-- Prompot you for a target weight and date
-- Evaluate whether your goal is on track and display results
+#### 2.  Use the ```extract_metrics.py``` CLI tool 
+This tool allows you to extract and clean your Apple Health data, saving it to a CSV file for further analysis.
+
+```bash
+source venv/bin/activate  # If using a virtual environment
+python -m src.cli.extract_metrics [optional path/to/export.xml]
+```
+
+This will create a file named ```cleaned_metrics.csv``` in the ```output/` directory.
+
 
 ### Example Output
 
