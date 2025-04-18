@@ -9,6 +9,8 @@ Analyzes correlations between health and lifestyle metrics to evaluate:
 - Behavior-driven trends (e.g., activity vs intake)
 - Metabolic adaptation indicators
 
+Uses smoothed "Trend" metrics when available to reduce daily noise and improve analysis stability.
+
 Outputs:
 - Console summary with interpretation
 - Text report
@@ -23,11 +25,19 @@ import logging
 import os
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    datefmt="%H:%M:%S"
-)
+
+# Mapping of raw to smoothed "Trend" columns
+trend_map = {
+    'Weight': 'TrendWeight',
+    'BodyFatPercentage': 'TrendBodyFatPercentage',
+    'LeanBodyMass': 'TrendLeanBodyMass',
+    'CaloriesIn': 'TrendCaloriesIn',
+    'BasalCaloriesBurned': 'TrendBasalCaloriesBurned',
+    'ActiveCaloriesBurned': 'TrendActiveCaloriesBurned',
+    'TDEE': 'TrendTDEE',
+    'NetCalories': 'TrendNetCalories',
+}
+
 
 def interpret_correlation(r: float) -> str:
     """Provides a descriptive interpretation of the correlation coefficient."""
@@ -49,9 +59,10 @@ def interpret_correlation(r: float) -> str:
     direction = "positive" if r > 0 else "negative" if r < 0 else "no"
     return f"{strength} {direction} correlation"
 
+
 def correlate_metrics(df: pd.DataFrame, output_dir: str = "output") -> None:
     """
-    Analyzes and reports correlations between health metrics.
+    Analyzes and reports correlations between health metrics using smoothed trend values where possible.
 
     Args:
         df (pd.DataFrame): Cleaned health data.
@@ -59,24 +70,28 @@ def correlate_metrics(df: pd.DataFrame, output_dir: str = "output") -> None:
     """
     os.makedirs(output_dir, exist_ok=True)
 
-    # Derived metrics
     df = df.sort_values("date").set_index("date").copy()
+
+    # Replace metrics with their trend versions if available
+    for raw, trend in trend_map.items():
+        if trend in df.columns:
+            df[raw] = df[trend]
+
+    # Derived metrics
     df["FatMass"] = df["Weight"] * df["BodyFatPercentage"]
     df["LeanMass"] = df["LeanBodyMass"]
     df["TDEE"] = df["BasalCaloriesBurned"] + df["ActiveCaloriesBurned"]
     df["NetCalories"] = df["CaloriesIn"] - df["TDEE"]
     df["BasalMinusIntake"] = df["BasalCaloriesBurned"] - df["CaloriesIn"]
 
-
-    # Replace deltas with 21-day rolling averages
+    # Rolling deltas over 21-day windows
     rolling = df[["Weight", "FatMass", "LeanMass", "NetCalories"]].rolling(window=21, min_periods=11)
-
     df["WeightDelta"] = rolling["Weight"].apply(lambda x: x.iloc[-1] - x.iloc[0])
     df["FatMassDelta"] = rolling["FatMass"].apply(lambda x: x.iloc[-1] - x.iloc[0])
     df["LeanMassDelta"] = rolling["LeanMass"].apply(lambda x: x.iloc[-1] - x.iloc[0])
-    df["NetCalDelta"] = rolling["NetCalories"].sum()  # total net deficit over 21 days
+    df["NetCalDelta"] = rolling["NetCalories"].sum()
 
-    # Drop rows with insufficient data
+    # Filter for valid rows
     df = df.dropna(subset=["WeightDelta", "FatMassDelta", "LeanMassDelta", "NetCalDelta"])
 
     correlation_sets = {
@@ -127,15 +142,15 @@ def correlate_metrics(df: pd.DataFrame, output_dir: str = "output") -> None:
                 else:
                     report_lines.append(f"{x} vs {y}: insufficient data")
 
-    # Output summary
-    summary_path = os.path.join(output_dir, "correlation_report.txt")
-    with open(summary_path, "w") as f:
+    # Save text report
+    report_path = os.path.join(output_dir, "correlation_report.txt")
+    with open(report_path, "w") as f:
         for line in report_lines:
             print(line)
             f.write(line + "\n")
-    logger.info(f"Correlation summary saved to {summary_path}")
+    logger.info(f"Correlation summary saved to {report_path}")
 
-    # Output CSV
+    # Save CSV file
     df_corr = pd.DataFrame(correlations)
     csv_path = os.path.join(output_dir, "correlation_summary.csv")
     df_corr.to_csv(csv_path, index=False)

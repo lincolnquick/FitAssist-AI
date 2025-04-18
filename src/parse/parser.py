@@ -1,3 +1,4 @@
+# src/parse/parser.py
 """
 Apple Health XML Parser for FitAssist AI
 

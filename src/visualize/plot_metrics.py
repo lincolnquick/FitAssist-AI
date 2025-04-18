@@ -1,6 +1,5 @@
+# src/visualize/plot_metrics.py
 """
-plot_metrics.py
-
 Generates grouped and enhanced time series plots for health metrics over
 various time periods (full, yearly, monthly). Groups include:
 - Weight & Body Composition
@@ -27,6 +26,18 @@ PLOT_GROUPS = {
     "activity": ["StepCount", "DistanceWalkingRunning"],
 }
 
+# Map raw metrics to their smoothed "Trend" versions, if available
+TREND_MAPPING = {
+    'Weight': 'TrendWeight',
+    'BodyFatPercentage': 'TrendBodyFatPercentage',
+    'LeanBodyMass': 'TrendLeanBodyMass',
+    'CaloriesIn': 'TrendCaloriesIn',
+    'TDEE': 'TrendTDEE',
+    'NetCalories': 'TrendNetCalories',
+    'BasalCaloriesBurned': 'TrendBasalCaloriesBurned',
+    'ActiveCaloriesBurned': 'TrendActiveCaloriesBurned',
+}
+
 
 def plot_metrics(
         df: pd.DataFrame,
@@ -51,7 +62,11 @@ def plot_metrics(
         if "LeanBodyMass" in df.columns:
             df["LeanBodyMass"] = df["LeanBodyMass"] * KG_TO_LBS
     for group_name, metrics in PLOT_GROUPS.items():
-        available_metrics = [m for m in metrics if m in df.columns]
+        available_metrics = []
+        for m in metrics:
+            trend_col = TREND_MAPPING.get(m, m)
+            if trend_col in df.columns:
+                available_metrics.append(trend_col)
         if not available_metrics:
             logger.warning(f"No available metrics found for group: {group_name}")
             continue
@@ -91,12 +106,15 @@ def _plot_time_series(df: pd.DataFrame, metrics: list[str], group_name: str, out
         ax1 = plt.gca()
         ax2 = ax1.twinx()
 
-        if "Weight" in df:
-            ax1.plot(df["date"], df["Weight"], label="Weight (lb)" if use_imperial_units else "Weight (kg)", color="tab:blue", linewidth=2)
-        if "LeanBodyMass" in df:
-            ax1.plot(df["date"], df["LeanBodyMass"], label="Lean Body Mass (lb)" if use_imperial_units else "Lean Body Mass (kg)", color="tab:green", linewidth=2)
-        if "BodyFatPercentage" in df:
-            ax2.plot(df["date"], df["BodyFatPercentage"] * 100, label="Body Fat (%)", color="tab:red", linewidth=2, linestyle="--")
+        for col in metrics:
+            if col == "TrendWeight":
+                label = "Weight (lb)" if use_imperial_units else "Weight (kg)"
+                ax1.plot(df["date"], df[col], label=label, color="tab:blue", linewidth=2)
+            elif col == "TrendLeanBodyMass":
+                label = "Lean Body Mass (lb)" if use_imperial_units else "Lean Body Mass (kg)"
+                ax1.plot(df["date"], df[col], label=label, color="tab:green", linewidth=2)
+            elif col == "TrendBodyFatPercentage":
+                ax2.plot(df["date"], df[col] * 100, label="Body Fat (%)", color="tab:red", linewidth=2, linestyle="--")
 
         ax1.set_ylabel("Mass (lb)" if use_imperial_units else "Mass (kg)")
         ax2.set_ylabel("Body Fat (%)")
@@ -107,16 +125,16 @@ def _plot_time_series(df: pd.DataFrame, metrics: list[str], group_name: str, out
 
     elif group_name == "calories":
         ax = plt.gca()
-        if "BasalCaloriesBurned" in df and "ActiveCaloriesBurned" in df:
+        if "TrendBasalCaloriesBurned" in metrics and "TrendActiveCaloriesBurned" in metrics:
             ax.stackplot(df["date"],
-                         df["BasalCaloriesBurned"],
-                         df["ActiveCaloriesBurned"],
-                         labels=["Basal", "Active"],
-                         colors=["#9ecae1", "#6baed6"])
-        if "CaloriesIn" in df:
-            ax.plot(df["date"], df["CaloriesIn"], label="Calories In", color="tab:orange", linewidth=2)
-        if "NetCalories" in df:
-            ax.plot(df["date"], df["NetCalories"], label="Net Calories", color="tab:red", linestyle="--", linewidth=2)
+                        df["TrendBasalCaloriesBurned"],
+                        df["TrendActiveCaloriesBurned"],
+                        labels=["Basal", "Active"],
+                        colors=["#9ecae1", "#6baed6"])
+        if "TrendCaloriesIn" in metrics:
+            ax.plot(df["date"], df["TrendCaloriesIn"], label="Calories In", color="tab:orange", linewidth=2)
+        if "TrendNetCalories" in metrics:
+            ax.plot(df["date"], df["TrendNetCalories"], label="Net Calories", color="tab:red", linestyle="--", linewidth=2)
 
         ax.set_ylabel("Calories")
         plt.legend()

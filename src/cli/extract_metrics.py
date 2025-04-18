@@ -1,3 +1,4 @@
+# src/cli/extract_metrics.py
 """
 Extract Metrics CLI for FitAssist AI
 
@@ -22,8 +23,9 @@ Output:
 """
 import sys
 import logging
+import pandas as pd
 from src.parse.parser import parse_health_metrics
-from src.clean.clean_metrics import clean_metrics
+from src.clean.smooth_and_impute import smooth_and_impute
 
 # Configure logging
 logging.basicConfig(
@@ -40,9 +42,15 @@ def main():
 
     # Parse metrics
     metrics = parse_health_metrics(xml_path)
+    if not metrics:
+        logger.error("No metrics were parsed. Exiting.")
+        return
 
     # Clean metrics
-    cleaned_df = clean_metrics(metrics)
+    df = pd.DataFrame.from_dict(metrics, orient="index")
+    df.index.name = "date"
+    df = df.reset_index()
+    cleaned_df = smooth_and_impute(df)
 
     # Export cleaned metrics to CSV
     output_path = "output/cleaned_metrics.csv"

@@ -1,9 +1,13 @@
+# src/analyze/body_composition.py
+
 """
 body_composition.py
 
 Analyzes changes in body composition over time using monthly differences
-in weight, fat mass, and lean body mass. Visualizes the distribution of
-mass change attributed to fat versus lean tissue.
+in smoothed weight, fat mass, and lean body mass. Visualizes the distribution
+of mass change attributed to fat versus lean tissue.
+
+This version uses 'Trend' metrics for more stable estimates.
 
 Author: Lincoln Quick
 """
@@ -12,18 +16,17 @@ import os
 import logging
 import pandas as pd
 import matplotlib.pyplot as plt
-
 from config.constants import KG_TO_LBS
 
 logger = logging.getLogger(__name__)
 
 def analyze_body_composition(df: pd.DataFrame, output_dir: str = "output") -> pd.DataFrame:
     """
-    Analyze monthly changes in fat mass and lean mass, and determine the 
-    ratio of fat to lean tissue lost or gained.
+    Analyze monthly changes in fat mass and lean mass, using smoothed metrics, and determine 
+    the ratio of fat to lean tissue lost or gained.
 
     Args:
-        df (pd.DataFrame): Cleaned metrics DataFrame with weight, body fat %, lean mass
+        df (pd.DataFrame): Cleaned metrics DataFrame with trend weight, body fat %, and lean mass
         output_dir (str): Folder to save outputs
 
     Returns:
@@ -33,7 +36,12 @@ def analyze_body_composition(df: pd.DataFrame, output_dir: str = "output") -> pd
     df["date"] = pd.to_datetime(df["date"])
     df.set_index("date", inplace=True)
 
-    # Calculate fat mass
+    # Use smoothed values
+    df["Weight"] = df["TrendWeight"]
+    df["BodyFatPercentage"] = df["TrendBodyFatPercentage"]
+    df["LeanBodyMass"] = df["TrendLeanBodyMass"]
+
+    # Calculate fat mass using smoothed values
     df["FatMass"] = df["Weight"] * df["BodyFatPercentage"]
     df["LeanMass"] = df["LeanBodyMass"]
 

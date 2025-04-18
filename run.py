@@ -42,28 +42,28 @@ def main():
         df = load_cleaned_metrics(csv_path)
 
         # # Step 1: Visualization
-        # logger.info("Generating visualizations...")
-        # plot_metrics(df, output_dir=plot_dir, periods=plot_periods, use_imperial_units=use_imperial)
-        # logger.info("All plots generated successfully.")
+        logger.info("Generating visualizations...")
+        plot_metrics(df, output_dir=plot_dir, periods=plot_periods, use_imperial_units=use_imperial)
+        logger.info("All plots generated successfully.")
 
         # # Step 2: Description
-        # logger.info("Analyzing descriptive statistics...")
-        # describe_data(df=df, output_dir=output_dir)
+        logger.info("Analyzing descriptive statistics...")
+        describe_data(df=df, output_dir=output_dir)
 
         # # Step 3: Correlation
-        # logger.info("Generating correlation report...")
-        # correlate_metrics(df=df, output_dir=output_dir)
+        logger.info("Generating correlation report...")
+        correlate_metrics(df=df, output_dir=output_dir)
 
         # # Step 4: Efficiency analysis
-        # logger.info("Estimating caloric efficiency...")
-        # eff_result = analyze_efficiency(df)
-        # monthly_eff = eff_result.get("monthly_summary")
-        # if monthly_eff is not None:
-        #     print(monthly_eff[["CaloriesPerPound"]])
+        logger.info("Estimating caloric efficiency...")
+        eff_result = analyze_efficiency(df)
+        monthly_eff = eff_result.get("monthly_summary")
+        if monthly_eff is not None:
+            print(monthly_eff[["CaloriesPerPound"]])
 
         # # Step 5: Body composition
-        # logger.info("Analyzing body composition trends...")
-        # analyze_body_composition(df)
+        logger.info("Analyzing body composition trends...")
+        analyze_body_composition(df)
 
         # Step 6: Forecasting
         logger.info("Forecasting weight trajectory...")

@@ -1,14 +1,14 @@
 # src/analyze/describe_data.py
 
 """
-describe_data.py
-
 Analyzes cleaned health metrics and provides a summary report. This includes:
-- Latest metric values
+- Latest trend metric values
 - Daily, weekly, and monthly deltas
 - 90-day rolling statistics
 - Console output with color formatting
 - Saves text and CSV reports to output/
+
+Uses Trend-prefixed metrics if available for more stable summaries.
 
 Author: Lincoln Quick
 """
@@ -22,25 +22,23 @@ init(autoreset=True)
 logger = logging.getLogger(__name__)
 
 def describe_data(df: pd.DataFrame, output_dir: str = "output") -> None:
-    """
-    Analyze the cleaned metrics and output a summary report.
-
-    Args:
-        df (pd.DataFrame): Cleaned health data with datetime-indexed rows.
-        output_dir (str): Path to store summary report and delta CSV.
-    """
     os.makedirs(output_dir, exist_ok=True)
     df = df.copy()
     df["date"] = pd.to_datetime(df["date"])
     df.set_index("date", inplace=True)
 
+    # Use Trend metrics if they exist
+    def get_metric(name): 
+        return f"Trend{name}" if f"Trend{name}" in df.columns else name
+
+    # Compute time deltas and rolling window
     latest = df.iloc[-1]
     daily = df.diff().tail(1)
     weekly = df.diff(periods=7).tail(1)
     monthly = df.resample("ME").last().diff().tail(1)
     last_90 = df.tail(90)
 
-    # Prepare summary
+    # Summary output
     lines = []
     def add_line(label, value, color=Fore.WHITE):
         line = f"{color}{label:<35}: {value}{Style.RESET_ALL}"
@@ -48,26 +46,27 @@ def describe_data(df: pd.DataFrame, output_dir: str = "output") -> None:
         lines.append(f"{label:<35}: {value}")
 
     print(Fore.CYAN + "\n--- Metric Summary ---\n" + Style.RESET_ALL)
-    add_line("Latest Weight", f"{latest.get('Weight', 'N/A'):.2f}")
-    add_line("Latest BodyFatPercentage", f"{latest.get('BodyFatPercentage', 'N/A'):.2f}")
-    add_line("Latest LeanBodyMass", f"{latest.get('LeanBodyMass', 'N/A'):.2f}")
-    add_line("Latest CaloriesIn", f"{latest.get('CaloriesIn', 'N/A'):.2f}")
-    add_line("Latest BasalCaloriesBurned", f"{latest.get('BasalCaloriesBurned', 'N/A'):.2f}")
-    add_line("Latest ActiveCaloriesBurned", f"{latest.get('ActiveCaloriesBurned', 'N/A'):.2f}")
+    for metric in ["Weight", "BodyFatPercentage", "LeanBodyMass", "CaloriesIn", "BasalCaloriesBurned", "ActiveCaloriesBurned"]:
+        col = get_metric(metric)
+        if col in df.columns:
+            add_line(f"Latest {metric}", f"{latest.get(col, 'N/A'):.2f}")
 
     print(Fore.YELLOW + "\n--- Delta Summary ---\n" + Style.RESET_ALL)
     for metric in ["Weight", "BodyFatPercentage", "LeanBodyMass"]:
-        add_line(f"{metric} change (1d)", f"{daily[metric].values[0]:.2f}", Fore.YELLOW)
-        add_line(f"{metric} change (7d)", f"{weekly[metric].values[0]:.2f}", Fore.YELLOW)
-        add_line(f"{metric} change (monthly)", f"{monthly[metric].values[0]:.2f}", Fore.YELLOW)
+        col = get_metric(metric)
+        if col in df.columns:
+            add_line(f"{metric} change (1d)", f"{daily[col].values[0]:.2f}", Fore.YELLOW)
+            add_line(f"{metric} change (7d)", f"{weekly[col].values[0]:.2f}", Fore.YELLOW)
+            add_line(f"{metric} change (monthly)", f"{monthly[col].values[0]:.2f}", Fore.YELLOW)
 
     print(Fore.GREEN + "\n--- 90-Day Statistics ---\n" + Style.RESET_ALL)
     for metric in ["Weight", "LeanBodyMass", "CaloriesIn", "NetCalories", "TDEE"]:
-        if metric in last_90.columns:
-            add_line(f"{metric} mean (90d)", f"{last_90[metric].mean():.2f}", Fore.GREEN)
-            add_line(f"{metric} std dev (90d)", f"{last_90[metric].std():.2f}", Fore.GREEN)
-            add_line(f"{metric} min (90d)", f"{last_90[metric].min():.2f}", Fore.GREEN)
-            add_line(f"{metric} max (90d)", f"{last_90[metric].max():.2f}", Fore.GREEN)
+        col = get_metric(metric)
+        if col in df.columns:
+            add_line(f"{metric} mean (90d)", f"{last_90[col].mean():.2f}", Fore.GREEN)
+            add_line(f"{metric} std dev (90d)", f"{last_90[col].std():.2f}", Fore.GREEN)
+            add_line(f"{metric} min (90d)", f"{last_90[col].min():.2f}", Fore.GREEN)
+            add_line(f"{metric} max (90d)", f"{last_90[col].max():.2f}", Fore.GREEN)
 
     # Save summary to text file
     summary_path = os.path.join(output_dir, "summary_report.txt")

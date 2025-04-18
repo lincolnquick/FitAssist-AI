@@ -22,7 +22,7 @@ def clean_and_aggregate(parsed_data: dict, weight_unit: str = "kg") -> pd.DataFr
 
     logger.info("Starting data cleaning and aggregation...")
 
-    # Step 1: Normalize entries and drop duplicates
+    # Normalize entries and drop duplicates
     metric_dfs = {}
     for metric, entries in data.items():
         try:
@@ -37,7 +37,7 @@ def clean_and_aggregate(parsed_data: dict, weight_unit: str = "kg") -> pd.DataFr
         except Exception as e:
             logger.warning(f"Skipping metric {metric} due to error: {e}")
 
-    # Step 2: Aggregate values per day
+    # Aggregate values per day
     daily_agg = defaultdict(dict)
 
     def aggregate_metric(df, label):
@@ -67,7 +67,7 @@ def clean_and_aggregate(parsed_data: dict, weight_unit: str = "kg") -> pd.DataFr
     daily_df.index.name = "date"
     daily_df.reset_index(inplace=True)
 
-    # Step 3: Unit conversions
+    # Unit conversions
     if weight_unit == "lb":
         if "Weight" in daily_df.columns and daily_df["Weight"].mean() > 130:
             daily_df["Weight"] *= LBS_TO_KG
@@ -77,33 +77,19 @@ def clean_and_aggregate(parsed_data: dict, weight_unit: str = "kg") -> pd.DataFr
     if "DistanceWalkingRunning" in daily_df.columns:
         daily_df["DistanceWalkingRunning"] *= M_TO_KM
 
-    # Step 4: Derived fields
-    daily_df["CaloriesOut"] = (
-        daily_df[["CaloriesOut", "BasalCaloriesOut"]]
-        .fillna(0)
-        .sum(axis=1)
-    )
-    daily_df["NetCalories"] = daily_df["CaloriesIn"] - daily_df["CaloriesOut"]
+    # Derived fields
+    daily_df["TDEE"] = daily_df[["ActiveCaloriesBurned", "BasalCaloriesBurned"]].fillna(0).sum(axis=1)
+    daily_df["NetCalories"] = daily_df["CaloriesIn"] - daily_df["TDEE"]
 
-    # Step 5: Interpolate missing weights
-    daily_df = daily_df.sort_values("date")
-    if "Weight" in daily_df.columns:
-        daily_df.set_index("date", inplace=True)
-        missing_before = daily_df["Weight"].isna().sum()
-        daily_df["Weight"] = daily_df["Weight"].interpolate(method="time", limit_direction="both")
-        missing_after = daily_df["Weight"].isna().sum()
-        daily_df.reset_index(inplace=True)
-        logger.info(f"Interpolated Weight: {missing_before - missing_after} values filled")
-
-    # Step 6: Final cleanup
-    valid_df = daily_df.dropna(subset=REQUIRED_COLUMNS)
+    # Final cleanup
+    valid_df = daily_df.copy()
     logger.info(f"Valid modeling rows: {len(valid_df)} / {len(daily_df)}")
     logger.info(f"Aggregated daily entries: {len(valid_df)} days with data")
 
     if valid_df.empty or len(valid_df) < MIN_DAYS_REQUIRED:
         raise ValueError("Not enough valid data for modeling.")
 
-    # Step 7: Export cleaned data
+    # Export cleaned data
     output_path = "output/cleaned_data.csv"
     valid_df.to_csv(output_path, index=False)
     logger.info(f"Cleaned data exported to {output_path}")
