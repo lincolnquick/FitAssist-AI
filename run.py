@@ -23,6 +23,7 @@ import ast
 import glob
 import logging
 import subprocess
+from datetime import datetime
 
 from data.load_data import load_cleaned_metrics
 from src.tools.user_info import load_or_prompt_user_info
@@ -31,7 +32,6 @@ from src.analyze.describe_data import describe_data
 from src.analyze.correlate_metrics import correlate_metrics
 from src.analyze.caloric_efficiency import analyze_efficiency
 from src.analyze.body_composition import analyze_body_composition
-from src.predict.forecast_weight import forecast_from_cleaned_csv
 from src.predict.forecast_metric import forecast_metric
 from config.constants import KG_TO_LBS
 
@@ -195,7 +195,12 @@ def main():
         forecast_log_path = os.path.join(output_dir, "forecast_session.txt")
         forecast_log_lines = []
         available_trends = [col for col in df.columns if col.startswith("Trend")]
-        metric_choices = sorted(set(col.replace("Trend", "") for col in available_trends))
+        excluded_metrics = {"NetCalories", "TDEE", "LeanBodyMass"}
+        metric_choices = sorted(set(
+            col.replace("Trend", "") 
+            for col in available_trends 
+            if all(excl not in col for excl in excluded_metrics)
+        ))
 
         while True:
             print("\n--- Forecast Setup ---")
@@ -203,7 +208,7 @@ def main():
             for i, m in enumerate(metric_choices, 1):
                 print(f"{i}. {m}")
 
-            selected_input = input("\nEnter the metric to forecast (e.g., Weight or 8),  (enter 'q' to quit): ").strip()
+            selected_input = input("\nEnter the metric to forecast (e.g., Weight or 5),  (enter 'q' to quit): ").strip()
             if selected_input.lower() == "q":
                 break
 
@@ -237,9 +242,21 @@ def main():
                 logger.error("Invalid forecast day format. Use a number (e.g., 30) or list (e.g., [7,14,30])")
                 continue
 
+
             # Forecast
+
+            dob = datetime.strptime(user_info["dob"], "%Y-%m-%d")
+            sex = user_info["sex"].lower()
+
+            result = forecast_metric(
+                df=df,
+                target_metric=selected,
+                forecast_days=forecast_days,
+                dob=dob,
+                sex=sex
+            )
             try:
-                result = forecast_metric(df, target_metric=selected, forecast_days=forecast_days)
+                result = forecast_metric(df, target_metric=selected, forecast_days=forecast_days, dob=dob, sex=sex)
                 if result:
                     forecast, used_features, r2 = result
                     header = f"\n--- {selected} Forecast ---"
