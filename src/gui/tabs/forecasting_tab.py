@@ -6,6 +6,8 @@ import streamlit as st
 import pandas as pd
 from src.predict.forecast_metric import forecast_metric
 from config.constants import KG_TO_LBS
+from src.tools.user_info import load_or_prompt_user_info
+from datetime import datetime
 
 
 def render_forecasting_tab(df: pd.DataFrame):
@@ -16,9 +18,12 @@ def render_forecasting_tab(df: pd.DataFrame):
         return
 
     # Metric selection
+    excluded = {"NetCalories", "TDEE", "LeanBodyMass"}
     candidate_metrics = [
         col for col in df.columns
-        if col.startswith("Trend") and not col.endswith("_Delta")
+        if col.startswith("Trend")
+        and not col.endswith("_Delta")
+        and all(excl not in col for excl in excluded)
     ]
 
     if not candidate_metrics:
@@ -29,11 +34,18 @@ def render_forecasting_tab(df: pd.DataFrame):
 
     # Units and forecast options
     use_imperial = st.checkbox("Display mass in pounds (lbs)", value=False)
-    span_days = st.slider("Forecast how many days ahead?", min_value=1, max_value=365, value=30)
+    span_days = st.slider("Forecast how many days ahead?", min_value=1, max_value=800, value=30)
     window_size = st.slider("Rolling window size", 7, 60, 21, step=7)
     top_n_features = st.slider("Top correlated features to use", 1, 10, 5)
 
     if st.button("Generate Forecast"):
+        user_info = load_or_prompt_user_info()
+        try:
+            dob = datetime.strptime(user_info["dob"], "%Y-%m-%d")
+            sex = user_info["sex"].lower()
+        except Exception as e:
+            st.error("Failed to parse DOB or Sex from user profile.")
+            return
         try:
             forecast_day_list = list(range(1, span_days + 1))
 
@@ -41,6 +53,8 @@ def render_forecasting_tab(df: pd.DataFrame):
                 df=df,
                 target_metric=selected_metric.replace("Trend", ""),
                 forecast_days=forecast_day_list,
+                dob=dob,
+                sex=sex,
                 window=window_size,
                 top_n_features=top_n_features
             )
