@@ -24,6 +24,9 @@ Output:
 import sys
 import logging
 import pandas as pd
+import os
+import ast
+from src.tools.user_info import load_or_prompt_user_info
 from src.parse.parser import parse_health_metrics
 from src.clean.smooth_and_impute import smooth_and_impute
 
@@ -36,6 +39,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def main():
+    user_info = ast.literal_eval(os.environ.get("FITASSIST_USER_INFO", "{}"))
+
     # Determine path to XML export
     xml_path = sys.argv[1] if len(sys.argv) > 1 else "data/export.xml"
     logger.info(f"Loading Apple Health export from: {xml_path}")
@@ -50,7 +55,7 @@ def main():
     df = pd.DataFrame.from_dict(metrics, orient="index")
     df.index.name = "date"
     df = df.reset_index()
-    cleaned_df = smooth_and_impute(df)
+    cleaned_df = smooth_and_impute(df, user_info=user_info, span=14)
 
     # Export cleaned metrics to CSV
     output_path = "data/cleaned_metrics.csv"

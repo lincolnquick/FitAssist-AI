@@ -131,24 +131,20 @@ def main():
     use_imperial = True
     plot_periods = ["full", "year", "month"]
 
-    # Step 1: Check if cleaned metrics need to be regenerated
-    if file_is_fresher(export_path, csv_path):
-        logger.info("Detected newer export.xml or missing cleaned_metrics.csv.")
-        run_extraction()
-    else:
-        logger.info("Using existing cleaned_metrics.csv.")
-
-    if not os.path.exists(csv_path):
-        logger.error(f"Missing required file: {csv_path}")
-        logger.info("Please make sure export.xml exists and try again.")
-        return
-
-    # Step 2: Ensure user info is available
+    # Step 1: Ensure user info is available
     user_info = load_or_prompt_user_info(user_info_path)
     if not user_info:
         logger.error("Unable to load or generate user characteristics.")
         return
 
+    # Step 2: Run extraction if needed, passing user_info to the subprocess
+    if file_is_fresher(export_path, csv_path):
+        logger.info("Detected newer export.xml or missing cleaned_metrics.csv.")
+        
+        # Save user_info to temp env var for extract_metrics to use
+        os.environ["FITASSIST_USER_INFO"] = str(user_info)
+        
+        run_extraction()  
     try:
         df = load_cleaned_metrics(csv_path)
 
@@ -175,13 +171,13 @@ def main():
             print(line)
 
         # Step 6: Efficiency analysis
-        logger.info("Estimating caloric efficiency...")
-        eff_result = analyze_efficiency(df)
-        monthly_eff = eff_result.get("monthly_summary")
+        logger.info("Skipping caloric efficiency analysis...")
+        #eff_result = analyze_efficiency(df)
+       # monthly_eff = eff_result.get("monthly_summary")
         
-        if monthly_eff is not None:
-            print("\n--- Monthly Caloric Efficiency ---")
-            print(monthly_eff[["CaloriesPerPound"]])
+        #if monthly_eff is not None:
+            #print("\n--- Monthly Caloric Efficiency ---")
+            #print(monthly_eff[["CaloriesPerPound"]])
 
         print("")
         

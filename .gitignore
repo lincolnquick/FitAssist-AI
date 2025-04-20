@@ -7,25 +7,24 @@ __pycache__/
 # macOS system files
 .DS_Store
 
-# Virtual environment
+# Virtual environments
 .env/
 venv/
 ENV/
 env.bak/
 *.env
 
-# Apple Health exports (private)
-data/*.xml
-data/*.zip
+# Apple Health exports and personal data
+*.xml
+*.zip
+*.csv
+*.txt
+*.xlsx
+*.png
 
-# Output files may contain private health data
-output/*.txt
-output/*.csv
-output/**/*.png
-
-# Jupyter checkpoints (if added)
+# Jupyter checkpoints
 *.ipynb_checkpoints
 
-# Logs or temporary files
+# Logs and temp files
 *.log
 *.tmp

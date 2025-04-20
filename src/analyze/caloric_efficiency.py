@@ -42,14 +42,14 @@ def analyze_efficiency(df: pd.DataFrame, output_dir: str = "output") -> dict:
     df = df.sort_values("date").set_index("date")
 
     # Use trend metrics
-    if "TrendWeight" not in df or "TrendNetCalories" not in df:
-        raise ValueError("Required trend columns ('TrendWeight', 'TrendNetCalories') not found in data.")
+    if "TrendWeight" not in df or "EnergyBalance" not in df:
+        raise ValueError("Required trend columns ('TrendWeight', 'EnergyBalance') not found in data.")
 
     df["WeightDelta"] = df["TrendWeight"].diff()
 
     # === Rolling 7-Day Analysis ===
     window = 7
-    roll = df[["TrendWeight", "TrendNetCalories"]].rolling(f"{window}D", min_periods=window)
+    roll = df[["TrendWeight", "EnergyBalance"]].rolling(f"{window}D", min_periods=window)
 
     rolling_weight_lbs = roll["TrendWeight"].apply(lambda x: (x.iloc[-1] - x.iloc[0]) * KG_TO_LBS)
     rolling_calories = roll["TrendNetCalories"].sum()

@@ -17,8 +17,8 @@ Author: Lincoln Quick
 from datetime import datetime
 
 # Constants from Thomas et al. (2010)
-CF = 1020  # kcal/kg for fat-free mass (lean)
-CL = 9500  # kcal/kg for fat mass
+CL = 1020  # kcal/kg for fat-free mass (lean)
+CF = 9500  # kcal/kg for fat mass
 
 # RMR constants for Livingston-Kohlstadt formula (kcal/day)
 RMR = {
@@ -68,4 +68,4 @@ def estimate_caloric_imbalance(delta_fm: float, delta_ffm: float) -> float:
     Returns:
         float: Estimated net caloric imbalance (kcal)
     """
-    return (delta_fm * CL) + (delta_ffm * CF)
+    return (delta_fm * CF) + (delta_ffm * CL)
