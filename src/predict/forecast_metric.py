@@ -89,6 +89,10 @@ def forecast_metric(
     # Enforce physiological floor for CaloriesIn
     df["TrendCaloriesIn"] = df["TrendCaloriesIn"].clip(lower=SAFE_MIN_CALORIES)
 
+    # Derived composition fields
+    df["TrendFatMass"] = df["TrendWeight"] * df["TrendBodyFatPercentage"]
+    df["TrendLeanBodyMass"] = df["TrendWeight"] * (1 - df["TrendBodyFatPercentage"])
+
     # Compute dynamic age and resting metabolic rate (RMR) for each row
     df["Age"] = df["date"].apply(lambda d: calculate_age(dob, d))
     df["RMR"] = df.apply(lambda row: calculate_rmr(row["TrendWeight"], row["Age"], sex), axis=1)
@@ -96,14 +100,23 @@ def forecast_metric(
     # Compute delta over rolling window
     df[delta_target] = df[trend_target].diff(periods=window)
 
+    # If forecasting body fat %, scale deltas for better regression behavior
+    if target_metric == "BodyFatPercentage":
+        df[delta_target] = df[delta_target] * 100  # Convert decimal delta to percentage delta
+
     # ---------------------------
     # STEP 4: Feature Selection
     # ---------------------------
 
     # Exclude derived or dependent metrics
-    derived = {"TrendNetCalories", "TrendTDEE", "TrendLeanBodyMass"}
+    exclude = {}
+    if target_metric == "BodyFatPercentage":
+        exclude = {"TrendNetCalories", "TrendTDEE", "TrendLeanBodyMass", "TrendFatMass", "TrendWeight"}
+    else:
+        exclude = {"TrendNetCalories", "TrendTDEE", "TrendLeanBodyMass"}
+        
     candidate_features = [col for col in df.columns if col.startswith("Trend")
-                          and col not in [trend_target, delta_target] and col not in derived]
+                          and col not in [trend_target, delta_target] and col not in exclude]
 
     # Correlate features with target delta
     corr = df[candidate_features + [delta_target]].corr()
@@ -114,8 +127,14 @@ def forecast_metric(
     # STEP 5: Construct Feature Matrix
     # ---------------------------
 
+    # Include 30-day and 60-day rolling average features
+    for col in top_features:
+        df[f"{col}_30d"] = df[col].rolling(30).mean()
+        df[f"{col}_60d"] = df[col].rolling(60).mean()
+
     # Use rolling averages to smooth feature values
-    feature_df = df[top_features].rolling(window).mean()
+    extended_features = top_features + [f"{col}_30d" for col in top_features] + [f"{col}_60d" for col in top_features]
+    feature_df = df[extended_features].rolling(window).mean()
     feature_df[f"Recent{target_metric}"] = df[trend_target].shift(1)
 
     # Align features and target deltas
@@ -168,11 +187,19 @@ def forecast_metric(
         predicted_delta = model.predict(X_latest)[0]
         scaled_delta = predicted_delta * (days / window)
 
-        # Apply metabolic adaptation adjustment
-        sim_weight = current_value + scaled_delta
-        adaptation = estimate_rmr_adaptation(peak_weight, peak_age, sim_weight, sim_age, sex)
-        scaled_delta *= (1 - adaptation)
+        # Apply metabolic adaptation ONLY for weight-related forecasts
+        if target_metric in {"Weight", "FatMass", "LeanBodyMass"}:
+            sim_weight = current_value + scaled_delta
+            adaptation = estimate_rmr_adaptation(peak_weight, peak_age, sim_weight, sim_age, sex)
+            scaled_delta *= (1 - adaptation)
 
-        predictions[days] = current_value + scaled_delta
+        # Final prediction
+        final_value = current_value + scaled_delta
+
+        # Clip BodyFatPercentage to a plausible range (3% to 60%)
+        if target_metric == "BodyFatPercentage":
+            final_value = np.clip(final_value, 0.03, 0.60)
+
+        predictions[days] = final_value
 
     return predictions, top_features, r2

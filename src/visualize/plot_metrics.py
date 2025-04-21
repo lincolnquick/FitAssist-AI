@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 # Define metric groupings
 PLOT_GROUPS = {
     "weight": ["Weight", "BodyFatPercentage", "LeanBodyMass"],
-    "calories": ["CaloriesIn", "TDEE", "NetCalories", "BasalCaloriesBurned", "ActiveCaloriesBurned"],
+    "calories": ["CaloriesIn", "TDEE", "EnergyBalance", "RMR", "PA", "BasalCaloriesBurned", "ActiveCaloriesBurned"],
     "activity": ["StepCount", "DistanceWalkingRunning"],
 }
 
@@ -37,7 +37,9 @@ TREND_MAPPING = {
     'LeanBodyMass': 'TrendLeanBodyMass',
     'CaloriesIn': 'TrendCaloriesIn',
     'TDEE': 'TrendTDEE',
-    'NetCalories': 'TrendNetCalories',
+    'EnergyBalance': 'EnergyBalance',
+    'RMR': 'RMR',
+    'PA': 'PA',
     'BasalCaloriesBurned': 'TrendBasalCaloriesBurned',
     'ActiveCaloriesBurned': 'TrendActiveCaloriesBurned',
 }
@@ -140,16 +142,16 @@ def _plot_time_series(df: pd.DataFrame, metrics: list[str], group_name: str, out
 
     elif group_name == "calories":
         ax = plt.gca()
-        if "TrendBasalCaloriesBurned" in metrics and "TrendActiveCaloriesBurned" in metrics:
+        if "RMR" in metrics and "PA" in metrics:
             ax.stackplot(df["date"],
-                         df["TrendBasalCaloriesBurned"],
-                         df["TrendActiveCaloriesBurned"],
-                         labels=["Basal", "Active"],
+                         df["RMR"],
+                         df["PA"],
+                         labels=["RMR", "Physical Activity"],
                          colors=["#9ecae1", "#6baed6"])
         if "TrendCaloriesIn" in metrics:
             ax.plot(df["date"], df["TrendCaloriesIn"], label="Calories In", color="tab:orange", linewidth=2)
-        if "TrendNetCalories" in metrics:
-            ax.plot(df["date"], df["TrendNetCalories"], label="Net Calories", color="tab:red", linestyle="--", linewidth=2)
+        if "EnergyBalance" in metrics:
+            ax.plot(df["date"], df["EnergyBalance"], label="Energy Balance", color="tab:red", linestyle="--", linewidth=2)
 
         ax.set_ylabel("Calories")
         ax.legend()

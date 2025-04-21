@@ -65,7 +65,8 @@ def plots_are_fresh(plot_dir: str, data_path: str) -> bool:
 
     for plot in plot_files:
         if os.path.getmtime(plot) > data_mtime:
-            return True  # At least one plot is newer → skip regeneration
+            #return True  # At least one plot is newer → skip regeneration
+            return False # Temporarily disable this check
 
     return False  # All plots are older → need to regenerate
 
