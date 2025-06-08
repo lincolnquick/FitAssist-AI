@@ -1,30 +1,53 @@
-# Byte-compiled / cache
+# ─────────────────────────
+# Python artifacts
+# ─────────────────────────
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 
+# ─────────────────────────
 # macOS system files
+# ─────────────────────────
 .DS_Store
 
-# Virtual environments
+# ─────────────────────────
+# Virtual-envs
+# ─────────────────────────
 .env/
 venv/
 ENV/
 env.bak/
 *.env
 
-# Apple Health exports and personal data
+# ─────────────────────────
+# Personal / generated data
+# ─────────────────────────
+# Apple-Health exports (real user data)
 *.xml
-*.zip
-*.csv
-*.txt
-*.xlsx
-*.png
+!data/default.xml          # keep the demo file under version-control
 
-# Jupyter checkpoints
+# CSV / TSV / Excel produced by FitAssist
+*.csv
+*.tsv
+*.xlsx
+
+# Plain-text reports & logs
+*.txt
+*.log
+
+# Model artifacts
+*.pkl
+
+# Plots / figures
+*.png
+*.svg
+
+# Zip archives (raw exports)
+*.zip
+
+# Jupyter
 *.ipynb_checkpoints
 
-# Logs and temp files
-*.log
+# Misc temp
 *.tmp

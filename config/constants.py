@@ -69,10 +69,17 @@ M_TO_KM = 0.001
 # Default unit if none detected
 DEFAULT_WEIGHT_UNIT = "kg"
 
-# Recommended safety thresholds
-SAFE_MIN_CALORIES = 1200  # kcal/day
-SAFE_MAX_WEIGHT_LOSS_RATE = 2.0  # lbs/week
-SAFE_MAX_WEIGHT_GAIN_RATE = 2.0  # lbs/week
+# ────────────────────────────────────────────────────────────────
+# Safety / Watch-dog thresholds
+# ────────────────────────────────────────────────────────────────
+SAFE_MIN_CALORIES         = 1200     # kcal / day
+SAFE_MAX_WEIGHT_LOSS_RATE = 2.0      # kg / week
+SAFE_MAX_WEIGHT_GAIN_RATE = 2.0      # kg / week
+
+RMR_FLOOR   = 1000      # kcal / day  
+ADAPT_THRESH = 0.08     # 8 % drop in RMR triggers “adaptation” rule
+GAP_THRESH   = 5        # kg above goal before we warn
+
 
 # Suggested additional constants (not yet used but might be useful):
 # - MAX_INTERPOLATION_DAYS = 14

@@ -3,17 +3,11 @@ run.py
 
 Main entry point for analyzing, visualizing, and forecasting health metrics from Apple Health data.
 
-This script performs the following tasks:
-1. Checks freshness of data/export.xml vs data/cleaned_metrics.csv.
-2. If export.xml is newer or cleaned_metrics.csv is missing, triggers the extract pipeline.
-3. Ensures user_characteristics.csv exists (DOB, sex, height), prompting the user if necessary.
-4. Loads cleaned data and generates:
-    - Visualizations (full, yearly, monthly)
-    - Descriptive statistics
-    - Correlation reports
-    - Caloric efficiency trends
-    - Body composition analysis
-    - Weight forecast
+Performs:
+1. User info validation and loading
+2. Conditional data extraction from Apple Health export
+3. Visualization and analysis
+4. Forecasting with derived metric interpretation
 
 Author: Lincoln Quick
 """
@@ -24,15 +18,20 @@ import glob
 import logging
 import subprocess
 from datetime import datetime
+import shutil
 
 from data.load_data import load_cleaned_metrics
 from src.tools.user_info import load_or_prompt_user_info
 from src.visualize.plot_metrics import plot_metrics
 from src.analyze.describe_data import describe_data
 from src.analyze.correlate_metrics import correlate_metrics
-from src.analyze.caloric_efficiency import analyze_efficiency
 from src.analyze.body_composition import analyze_body_composition
 from src.predict.forecast_metric import forecast_metric
+from src.tools.goal_info import load_or_prompt_goal
+from src.classify.compliance_nb import predict_weekly_state, MODEL_PATH
+from src.classify.train_compliance_nb import main as train_nb
+from src.watchdog.dispatcher import run_watchdog
+from src.tools.forecast_helpers import add_trend_columns, batch_derive_dependent_metrics
 from config.constants import KG_TO_LBS
 
 # Configure logging
@@ -43,250 +42,204 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def plots_are_fresh(plot_dir: str, data_path: str) -> bool:
-    """
-    Returns True if any plot PNG file is newer than the cleaned metrics CSV.
-
-    Parameters:
-        plot_dir (str): Root plot directory.
-        data_path (str): Path to cleaned_metrics.csv.
-
-    Returns:
-        bool: True if at least one plot is newer than the data file.
-    """
-    if not os.path.exists(data_path):
-        return False
-
-    data_mtime = os.path.getmtime(data_path)
-    plot_files = glob.glob(os.path.join(plot_dir, "**", "*.png"), recursive=True)
-
-    if not plot_files:
-        return False
-
-    for plot in plot_files:
-        if os.path.getmtime(plot) > data_mtime:
-            #return True  # At least one plot is newer → skip regeneration
-            return False # Temporarily disable this check
-
-    return False  # All plots are older → need to regenerate
-
 def file_is_fresher(newer: str, older: str) -> bool:
-    """
-    Returns True if `newer` exists and is more recent than `older`.
-    """
     return os.path.exists(newer) and (
         not os.path.exists(older) or os.path.getmtime(newer) > os.path.getmtime(older)
     )
 
+def plots_are_fresh(plot_dir: str, data_path: str) -> bool:
+    if not os.path.exists(data_path):
+        return False
+    data_mtime = os.path.getmtime(data_path)
+    plot_files = glob.glob(os.path.join(plot_dir, "**", "*.png"), recursive=True)
+    return all(os.path.getmtime(p) <= data_mtime for p in plot_files)
 
 def run_extraction():
-    """
-    Runs the extract_metrics.py pipeline as a module to ensure imports work correctly.
-    """
     logger.info("Running data extraction pipeline from Apple Health export...")
     try:
-        result = subprocess.run(
-            ["python", "-m", "src.cli.extract_metrics"],
-            check=True
-        )
+        subprocess.run(["python", "-m", "src.cli.extract_metrics"], check=True)
         logger.info("Extraction complete.")
     except subprocess.CalledProcessError as e:
-        logger.error(f"Failed to extract metrics: {e}")
+        logger.error(f"Extraction failed: {e}")
         raise
-
-def format_summary_lines(lines: list[str], use_imperial: bool = False) -> list[str]:
-    """
-    Optionally converts metric values to imperial units for display.
-    Only applies to weight-related metrics (e.g., Weight, LeanBodyMass).
-
-    Args:
-        lines (list[str]): Raw summary lines.
-        use_imperial (bool): Whether to convert weight values to pounds.
-
-    Returns:
-        list[str]: Formatted summary lines for display.
-    """
-    converted = []
-    for line in lines:
-        if use_imperial and any(kw in line for kw in ["Weight", "LeanBodyMass"]):
-            parts = line.split(":")
-            try:
-                value = float(parts[1].strip().split()[0])
-                lbs = value * 2.20462
-                converted.append(f"{parts[0]:<35}: {lbs:.2f} lbs")
-            except Exception:
-                converted.append(line)
-        else:
-            converted.append(line)
-    return converted
 
 def main():
     data_dir = "data"
     output_dir = "output"
     plot_dir = os.path.join(output_dir, "plots")
-
     csv_path = os.path.join(data_dir, "cleaned_metrics.csv")
     export_path = os.path.join(data_dir, "export.xml")
+    default_path = os.path.join(data_dir, "default.xml")
     user_info_path = os.path.join(data_dir, "user_characteristics.csv")
+    goal_info_path = os.path.join(data_dir, "goal_info.csv")
 
     use_imperial = True
     plot_periods = ["full", "year", "month"]
 
-    # Step 1: Ensure user info is available
+    # ---------- Load or prompt for user characterists: DOB, sex, height ----------
     user_info = load_or_prompt_user_info(user_info_path)
     if not user_info:
-        logger.error("Unable to load or generate user characteristics.")
+        logger.error("Unable to load user characteristics.")
         return
 
-    # Step 2: Run extraction if needed, passing user_info to the subprocess
+    # ---------- Ensure Apple Health data exists ----------
+    if not os.path.exists(export_path):
+        if os.path.exists(default_path):
+            logger.warning(
+                "No export.xml found – using bundled default.xml demo data.\n"
+                "➡  To use your own data: on your iPhone open Health → "
+                "profile photo → Export Health Data, unzip the file, and place "
+                "export.xml in the data/ folder, then rerun."
+            )
+            # copy demo file to the canonical name so the extractor can find it
+            shutil.copy2(default_path, export_path)      # <── NEW LINE
+        else:
+            logger.error(
+                "Missing Apple Health export: data/export.xml\n"
+                "Place your own export.xml (see instructions above) and rerun."
+            )
+            return
+    
+    # ---------- Load or Prompt user for goal ----------
+    goal = load_or_prompt_goal(goal_info_path, use_imperial=True)
+    logger.info(f"User goal: {goal['weight_kg']*KG_TO_LBS:.2f} lbs by {goal['date']}")
+
+    # ---------- Refresh cleaned_metrics.csv if needed ----------
     if file_is_fresher(export_path, csv_path):
-        logger.info("Detected newer export.xml or missing cleaned_metrics.csv.")
-        
-        # Save user_info to temp env var for extract_metrics to use
+        logger.info("New export.xml detected. Re-running extraction.")
         os.environ["FITASSIST_USER_INFO"] = str(user_info)
-        
-        run_extraction()  
+        run_extraction()
+
     try:
         df = load_cleaned_metrics(csv_path)
+        df = add_trend_columns(df)
+        dob = datetime.strptime(user_info["dob"], "%Y-%m-%d")
+        sex = user_info["sex"].lower()
 
-        # Step 3: Visualization
+        # ---------- Visualization ----------
         if plots_are_fresh(plot_dir, csv_path):
-            logger.info(f"Existing plots are up-to-date. Skipping plot generation. See: {plot_dir}")
+            logger.info("Plots up to date. Skipping generation.")
         else:
             logger.info("Generating visualizations...")
             plot_metrics(df, output_dir=plot_dir, periods=plot_periods, use_imperial_units=use_imperial)
-            logger.info("All plots generated successfully.")
 
-        # Step 4: Description
-        logger.info("Analyzing descriptive statistics...")
-        summary_lines = describe_data(df=df, output_dir=output_dir)
-        print("")
-        for line in format_summary_lines(summary_lines, use_imperial=use_imperial):
+        # ---------- Description ----------
+        logger.info("Running summary analysis...")
+        summary_lines = describe_data(df, output_dir)
+        for line in summary_lines:
             print(line)
 
-        print("")
-        # Step 5: Correlation
-        logger.info("Generating correlation report...")
-        corr_lines = correlate_metrics(df=df, output_dir=output_dir)
+        # ---------- Correlation ----------
+        logger.info("Generating correlation matrix...")
+        corr_lines = correlate_metrics(df, output_dir)
         for line in corr_lines:
             print(line)
 
-        # Step 6: Efficiency analysis
-        logger.info("Skipping caloric efficiency analysis...")
-        #eff_result = analyze_efficiency(df)
-       # monthly_eff = eff_result.get("monthly_summary")
-        
-        #if monthly_eff is not None:
-            #print("\n--- Monthly Caloric Efficiency ---")
-            #print(monthly_eff[["CaloriesPerPound"]])
-
-        print("")
-        
-        # Step 7: Body composition
-        logger.info("Analyzing body composition trends...")
+        # ---------- Body Composition Trends ----------
         analyze_body_composition(df)
 
-        # Step 8: Forecasting
-        logger.info("Starting generalized forecasting...")
+        # ───────────────────── Classification  +  Watch-dog ──────────────────────
+        # 1. train NB model on first run
+        if not MODEL_PATH.exists():
+            logger.info("NB model absent - training on current dataset …")
+            train_nb()
+
+        # 2. Naive-Bayes weekly compliance prediction
+        nb_out = predict_weekly_state(df)           # {'state', 'proba', 'weeks'}
+
+        # 3. rule-based watchdog (returns a list of (code, -) tuples)
+        wd_alerts = run_watchdog(df, dob, sex, goal_info=goal)
+
+        # 4. combine: escalate NB state when a critical alert is raised
+        final_state = nb_out["state"]
+        CRITICAL = {"UnsafeIntake", "RapidWeightLoss", "RapidWeightGain", "LowRMR"}
+        if any(code in CRITICAL for code, *_ in wd_alerts):
+            final_state = "off_track"
+        elif any(code == "MetabolicAdapt" for code, *_ in wd_alerts):
+            # plateau / adaptation is serious but not as critical
+            final_state = "at_risk"
+
+        # 5. console report -------------------------------------------------------
+        print("\n--- Weekly Compliance Classification ---")
+        if nb_out["state"] == "unknown":
+            print(f"Only {nb_out['weeks']} weeks of data available - need ≥4 to classify.")
+        else:
+            p_on, p_risk, p_off = nb_out["proba"]
+            print(f"NB state            : {nb_out['state'].upper()}  "
+                f"(on={p_on*100:4.1f}%, risk={p_risk*100:4.1f}%, off={p_off*100:4.1f}%)")
+            print(f"Watch-dog final     : {final_state.upper()}")
+
+            if wd_alerts:
+                print("Rule triggers:")
+                for tup in wd_alerts:
+                    code = tup[0]
+                    msg  = tup[-1]      # message is always the last element
+                    print(f" • {code}: {msg}")
+            else:
+                print("No watchdog rules fired.")
+        # ─────────────────────────────────────────────────────────────────────────
+        # ---------- Forecasting ----------
+        logger.info("Launching CLI forecast module...")
 
         forecast_log_path = os.path.join(output_dir, "forecast_session.txt")
         forecast_log_lines = []
+
         available_trends = [col for col in df.columns if col.startswith("Trend")]
-        excluded_metrics = {"NetCalories", "TDEE", "LeanBodyMass"}
-        metric_choices = sorted(set(
-            col.replace("Trend", "") 
-            for col in available_trends 
-            if all(excl not in col for excl in excluded_metrics)
-        ))
+        base_metrics = sorted(set(col.replace("Trend", "") for col in available_trends))
 
         while True:
-            print("\n--- Forecast Setup ---")
-            print("Available metrics to forecast (enter 'q' to quit):")
-            for i, m in enumerate(metric_choices, 1):
+            print("\n--- Forecast Menu ---")
+            for i, m in enumerate(base_metrics, 1):
                 print(f"{i}. {m}")
 
-            selected_input = input("\nEnter the metric to forecast (e.g., Weight or 5),  (enter 'q' to quit): ").strip()
-            if selected_input.lower() == "q":
+            choice = input("\nSelect a metric by name or number (q to quit): ").strip()
+            if choice.lower() == "q":
                 break
+            selected = None
+            if choice.isdigit():
+                index = int(choice) - 1
+                if 0 <= index < len(base_metrics):
+                    selected = base_metrics[index]
+            elif choice in base_metrics:
+                selected = choice
 
-            # Determine the metric
-            if selected_input.isdigit():
-                index = int(selected_input) - 1
-                if 0 <= index < len(metric_choices):
-                    selected = metric_choices[index]
-                else:
-                    logger.error(f"Invalid number selection: {selected_input}")
-                    continue
-            elif selected_input in metric_choices:
-                selected = selected_input
-            else:
-                logger.error(f"Invalid metric: {selected_input}")
+            if not selected:
+                logger.warning("Invalid selection.")
                 continue
 
-            # Get forecast days
-            days_input = input("Enter days to forecast (e.g., 30 or [7,14,30]): ").strip()
+            days_input = input("Enter forecast days (e.g., 30 or [7,14,30]): ").strip()
             try:
-                if days_input.startswith("[") and days_input.endswith("]"):
-                    forecast_days = ast.literal_eval(days_input)
-                    if not all(isinstance(day, int) and day > 0 for day in forecast_days):
-                        raise ValueError
-                else:
-                    span = int(days_input)
-                    if span <= 0:
-                        raise ValueError
-                    forecast_days = list(range(1, span + 1))
-            except Exception:
-                logger.error("Invalid forecast day format. Use a number (e.g., 30) or list (e.g., [7,14,30])")
+                forecast_days = ast.literal_eval(days_input) if "[" in days_input else list(range(1, int(days_input)+1))
+            except:
+                logger.warning("Invalid forecast day input.")
                 continue
 
-
-            # Forecast
-
-            dob = datetime.strptime(user_info["dob"], "%Y-%m-%d")
-            sex = user_info["sex"].lower()
-
-            result = forecast_metric(
-                df=df,
-                target_metric=selected,
-                forecast_days=forecast_days,
-                dob=dob,
-                sex=sex
-            )
             try:
-                result = forecast_metric(df, target_metric=selected, forecast_days=forecast_days, dob=dob, sex=sex)
-                if result:
-                    forecast, used_features, r2 = result
-                    header = f"\n--- {selected} Forecast ---"
-                    logger.info(header.strip("-"))
-                    print(header)
+                forecast, features, r2 = forecast_metric(df, selected, forecast_days, dob, sex)
+                # Compute derived fields for each forecasted day
+                derived = batch_derive_dependent_metrics(forecast, df, selected, dob, sex)
 
-                    lines = [header]
-                    for d, val in forecast.items():
-                        if use_imperial and selected in ["Weight", "LeanBodyMass"]:
-                            line = f"{d} days: {val * KG_TO_LBS:.2f} lbs"
-                        else:
-                            line = f"{d} days: {val:.2f}"
-                        print(line)
-                        lines.append(line)
+                print(f"\nForecast for {selected}")
+                for day in forecast_days:
+                    row = derived[day]
+                    line = f"{day} days: "
+                    line += ", ".join(f"{k}={v:.2f}" for k, v in row.items())
+                    print(line)
+                    forecast_log_lines.append(line)
 
-                    features_line = f"\nFeatures used: {', '.join(used_features)}"
-                    r2_line = f"Model R² score (train): {r2:.3f}"
-                    print(features_line)
-                    print(r2_line)
-                    lines.extend([features_line, r2_line, ""])
-                    forecast_log_lines.extend(lines)
+                forecast_log_lines.append(f"Top features: {', '.join(features)}")
+                forecast_log_lines.append(f"Model R² score: {r2:.3f}\n")
+
             except Exception as e:
                 logger.error(f"Forecasting failed: {e}")
 
-        # Write the session forecast to output file
         if forecast_log_lines:
             with open(forecast_log_path, "w") as f:
                 f.write("\n".join(forecast_log_lines))
-            logger.info(f"Saved session forecast results to {forecast_log_path}")
+            logger.info(f"Forecast session saved to: {forecast_log_path}")
 
     except Exception as e:
-        logger.error(f"Execution failed: {e}")
-
+        logger.error(f"CLI failed: {e}")
 
 if __name__ == "__main__":
     main()

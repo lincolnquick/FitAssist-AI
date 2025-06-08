@@ -1,6 +1,7 @@
 # FitAssist AI
 
-**FitAssist AI** is a predictive health forecasting system powered by AI techniques. It analyzes Apple Health export data to visualize trends, forecast future metrics like weight or TDEE, and identify meaningful correlations between calorie balance, activity, and body composition. The system supports user-driven forecasting of any supported metric and logs predictions to a session file for review.
+**FitAssist AI** is a rule-augmented, ML-powered decision-support tool for personal health data.  
+It parses an Apple Health export, cleans & visualises trends, forecasts future metrics, classifies weekly compliance, and enforces domain-safety rules through an interpretable first-order-logic watchdog.
 
 This project is developed as part of the **CSC510: Foundations of Artificial Intelligence** portfolio at **Colorado State University Global**.
 
@@ -8,22 +9,14 @@ This project is developed as part of the **CSC510: Foundations of Artificial Int
 
 ## Features
 
-- Parses and deduplicates Apple Health export XML data.
-- Calculates and smooths daily metrics such as:
-  - Total Daily Energy Expenditure (TDEE)
-  - Net Calories (Calories In – TDEE)
-  - Basal and Active Calories Burned
-  - Step Count and Distance
-- Visualizes data across full history, calendar years, and months.
-- Generates descriptive summaries, including deltas and rolling statistics.
-- Analyzes correlations across all metrics and their trends.
-- Estimates caloric efficiency (kcal per pound of weight lost).
-- Detects changes in body composition over time.
-- Trains XGBoost models for:
-  - Weight change prediction
-  - Generalized forecasting of any metric (e.g., LeanBodyMass, TDEE)
-- Forecasts over custom time intervals or spans (e.g., 90 days or [7, 14, 30, 60]).
-- Logs all forecast results to `output/forecast_session.txt`.
+| Category | Highlights |
+|----------|------------|
+| **Parsing & Cleaning** | • Dedupes Apple Health records<br>• Smooths noisy metrics & fills gaps |
+| **Visual Analytics** | • Auto-generated PNGs for full history / yearly / monthly views<br>• Summary & delta tables |
+| **Machine Learning** | • XGBoost regression for multi-metric forecasting<br>• Persisted Naive-Bayes model classifies weekly state (`on_track`, `at_risk`, `off_track`) |
+| **Hybrid Reasoning** | • First-order-logic watchdog layer (Horn clauses) enforcing:<br> — safe calorie floor<br> — rapid-loss/gain limits<br> — RMR sanity<br> — metabolic-adaptation plateaus<br> — goal-feasibility check |
+| **Interactive CLI** | • Menu-driven forecast wizard<br>• Results logged to `output/forecast_session.txt` |
+| **Fail-safe Demo Mode** | • If `data/export.xml` is missing, a bundled **`default.xml`** is substituted so the program always runs |
 
 ---
 
@@ -31,33 +24,22 @@ This project is developed as part of the **CSC510: Foundations of Artificial Int
 
 ```
 FitAssist-AI/
-├── config/                     # Constants and thresholds (e.g., unit conversions)
-├── data/                       # Input files (Apple Health export.xml, user info)
-│   ├── export.xml              # Apple Health data (not included in repo)
-│   ├── cleaned_metrics.csv     # Output from parser pipeline
-│   └── user_characteristics.csv # DOB, height, biological sex
-├── milestones/                 # Weekly milestone documentation
-├── output/                     # Generated visualizations, reports, forecast logs
-│   ├── plots/                  # PNG plots by metric and period
-│   ├── summary_report.txt      # Descriptive statistics output
-│   ├── correlation_report.txt  # Ranked metric correlations
-│   ├── caloric_efficiency.csv  # kcal/lb summary
-│   ├── forecast_session.txt    # All user forecasts this session
-│   └── composition_analysis.png/csv # Lean/Fat trends
-├── src/                        # Source modules
-│   ├── analyze/                # Descriptive stats, correlations, efficiency
-│   ├── clean/                  # Smoothing and imputation of missing values
-│   ├── cli/                    # Pipeline scripts (e.g., extract_metrics)
-│   ├── modeling/               # XGBoost regression training
-│   ├── parse/                  # Apple Health XML parsing
-│   ├── predict/                # Forecasting logic (weight and general metrics)
-│   ├── tools/                  # Utility modules (e.g., user info, energy)
-│   └── visualize/              # Plot generation
-├── tests/                      # Unit tests (WIP)
-├── run.py                      # Main script to run full analysis + forecasting
-├── README.md                   # This file
-├── LICENSE
-└── REQUIREMENTS.txt            # Python dependencies
+├─ config/               # Constants (unit factors, safety thresholds, etc.)
+├─ data/
+│  ├─ export.xml         # your real Apple Health export (optional)
+│  ├─ default.xml        # demo data shipped with repo
+│  ├─ cleaned_metrics.csv
+│  └─ user_characteristics.csv
+├─ output/               # Plots, reports, forecast logs
+├─ src/
+│  ├─ analyze/           # descriptive stats, correlations
+│  ├─ classify/          # Naïve-Bayes model + trainer
+│  ├─ cli/               # extraction pipeline
+│  ├─ predict/           # XGB forecasting
+│  ├─ watchdog/          # FOL rules, dispatcher, feature builder
+│  └─ tools/             # utilities (energy eqns, user prompts, …)
+├─ run.py                # ――― main entry point ―――
+└─ REQUIREMENTS.txt
 ```
 ---
 
@@ -91,12 +73,12 @@ pip install -r REQUIREMENTS.txt
 2. Tap your profile photo > Export All Health Data.
 3. AirDrop or transfer the `export.zip` to your Mac, unzip it, and place `export.xml` into the `data/` directory.
 
+
 > **Important:** Do not commit this file to GitHub. It is excluded by `.gitignore`.
 
 ---
 
 ### Step 2: Run FitAssist AI
-
 
 ####  Run the main script (`run.py`)
 
@@ -104,20 +86,18 @@ pip install -r REQUIREMENTS.txt
 python run.py
 ```
 
-## Usage Overview
+## Using the Forecast Wizard
+```
+--- Forecast Menu ---
+1. Weight
+2. CaloriesIn
+3. TDEE
+...
 
-Upon running run.py, the system will:
- - Detect if Apple Health data has changed and reprocess if needed.
- - Ensure user profile is defined (height, sex, DOB).
- - Generate plots, summary statistics, correlations, and caloric efficiency.
- - Prompt you to forecast a health metric.
-
-You can:
- - Enter a metric name or number (e.g., Weight or 8).
- - Enter a single number (e.g., 90) to predict daily for the next 90 consecutive days.
- - Enter a list (e.g., [7,14,30,60]) to forecast specific intervals.
-
-All predictions are logged to output/forecast_session.txt.
+Select a metric by name or number (q to quit): 1
+Enter forecast days (e.g., 90 or [7,14,30]): [7,14,30,90]
+```
+Daily predictions plus derived RMR and body composition stats are printed to `output/forecast_session.txt`
 
 ⸻
 
@@ -132,16 +112,22 @@ Outputs:
  - R^2 score of the model
  - Appends forecast to session log
 
-## Portfolio Milestones
+ ---
 
-| Week | Deliverable            | File                                      | Due Date |
-|------|------------------------|-------------------------------------------|---------|
-| 2    | Use-Case Scenario      | `milestones/milestone_02_use_case.md`     | 2025-04-27 |
-| 3    | Neural Networks        | `milestones/milestone_03_neural_networks.md` | 2025-05-04 |
-| 4    | Intelligent Search     | `milestones/milestone_04_search_methods.md` | 2025-05-11 |
-| 5    | Classification         | `milestones/milestone_05_classification.md` | 2025-05-18 |
-| 6    | First-Order Logic      | `milestones/milestone_06_first_order_logic.md` | 2025-05-25 |
-| 8    | Final Submission       | `milestones/final_report.md` | 2025-06-08 |
+## Safety & Watchdog FOL
+
+| Rule Code | Trigger Condition |
+|----------|------------|
+| UnsafeIntake | any day < 1200 kcal |
+| RapidWeightLoss | Weekly weight change < -2 kg |
+| RapidWeightGain | Weekly weight change > +2 kg |
+| LowRMR | calculated RMR < 1000 kcal/day |
+| MetabolicAdapt | adaptation > 8% |
+| GoalNotReached / GoalTimingDrift | forecast misses or drifts from goal |
+| MismatchDeficit | consistency checks |
+| StaleData, etc. | data-quality checks |
+
+Critical rules escalate the compliance state to `OFF_TRACK` even if the model predicts otherwise.
 
 ## License
 
