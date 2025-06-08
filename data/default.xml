@@ -1,75 +1,205 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<HealthData locale="en_US" exportDate="2025-06-08T09:00:00-0600" version="13.0">
-  <!-- ---------- METRIC: WEIGHT (kg) ---------- -->
-  <Record type="HKQuantityTypeIdentifierBodyMass"
-          sourceName="iPhone"
-          sourceVersion="17.4"
-          unit="kg"
-          creationDate="2025-01-07T07:15:00-0600"
-          startDate="2025-01-07T07:15:00-0600"
-          endDate="2025-01-07T07:15:00-0600"
-          value="88.70"/>
-  <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="iPhone" sourceVersion="17.4"
-          unit="kg" creationDate="2025-01-08T07:12:00-0600" startDate="2025-01-08T07:12:00-0600"
-          endDate="2025-01-08T07:12:00-0600" value="88.55"/>
-  <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="iPhone" sourceVersion="17.4"
-          unit="kg" creationDate="2025-01-09T07:04:00-0600" startDate="2025-01-09T07:04:00-0600"
-          endDate="2025-01-09T07:04:00-0600" value="88.50"/>
-  <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="iPhone" sourceVersion="17.4"
-          unit="kg" creationDate="2025-01-10T07:11:00-0600" startDate="2025-01-10T07:11:00-0600"
-          endDate="2025-01-10T07:11:00-0600" value="88.40"/>
-  <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="iPhone" sourceVersion="17.4"
-          unit="kg" creationDate="2025-01-11T07:14:00-0600" startDate="2025-01-11T07:14:00-0600"
-          endDate="2025-01-11T07:14:00-0600" value="88.35"/>
-  <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="iPhone" sourceVersion="17.4"
-          unit="kg" creationDate="2025-01-12T07:09:00-0600" startDate="2025-01-12T07:09:00-0600"
-          endDate="2025-01-12T07:09:00-0600" value="88.30"/>
-  <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="iPhone" sourceVersion="17.4"
-          unit="kg" creationDate="2025-01-13T07:02:00-0600" startDate="2025-01-13T07:02:00-0600"
-          endDate="2025-01-13T07:02:00-0600" value="88.25"/>
+<HealthData locale="en_US">
+    <!-- Fake Apple Health XML file used as a default/placeholder. -->
+    <!-- =====================  Week 1  (06–12 Jan 2025) ===================== -->
+    <!-- Monday -->
+    <Record type="HKQuantityTypeIdentifierBodyMass"            value="88.6" unit="kg"    startDate="2025-01-06 08:00:00 -0600" endDate="2025-01-06 08:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierLeanBodyMass"        value="68.2" unit="kg"    startDate="2025-01-06 08:00:01 -0600" endDate="2025-01-06 08:00:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBodyFatPercentage"   value="0.23" unit="count" startDate="2025-01-06 08:00:02 -0600" endDate="2025-01-06 08:00:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1550" unit="kcal" startDate="2025-01-06 21:00:00 -0600" endDate="2025-01-06 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBasalEnergyBurned"     value="1986" unit="kcal" startDate="2025-01-06 23:59:00 -0600" endDate="2025-01-06 23:59:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierActiveEnergyBurned"    value="1175" unit="kcal" startDate="2025-01-06 23:59:01 -0600" endDate="2025-01-06 23:59:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierStepCount"             value="7800" unit="count" startDate="2025-01-06 23:59:02 -0600" endDate="2025-01-06 23:59:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDistanceWalkingRunning" value="5.9"  unit="km"   startDate="2025-01-06 23:59:03 -0600" endDate="2025-01-06 23:59:03 -0600"/>
 
-  <!-- ---------- METRIC: BODY-FAT % (fraction) ---------- -->
-  <Record type="HKQuantityTypeIdentifierBodyFatPercentage" sourceName="iPhone"
-          unit="count" value="0.233" creationDate="2025-01-07T07:15:00-0600"
-          startDate="2025-01-07T07:15:00-0600" endDate="2025-01-07T07:15:00-0600"/>
-  <Record type="HKQuantityTypeIdentifierBodyFatPercentage" sourceName="iPhone"
-          unit="count" value="0.232" creationDate="2025-01-10T07:11:00-0600"
-          startDate="2025-01-10T07:11:00-0600" endDate="2025-01-10T07:11:00-0600"/>
+    <!-- Sunday -->
+    <Record type="HKQuantityTypeIdentifierBodyMass"            value="88.4" unit="kg"    startDate="2025-01-12 08:00:00 -0600" endDate="2025-01-12 08:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierLeanBodyMass"        value="68.0" unit="kg"    startDate="2025-01-12 08:00:01 -0600" endDate="2025-01-12 08:00:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBodyFatPercentage"   value="0.23" unit="count" startDate="2025-01-12 08:00:02 -0600" endDate="2025-01-12 08:00:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1530" unit="kcal" startDate="2025-01-12 21:00:00 -0600" endDate="2025-01-12 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBasalEnergyBurned"     value="1984" unit="kcal" startDate="2025-01-12 23:59:00 -0600" endDate="2025-01-12 23:59:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierActiveEnergyBurned"    value="1160" unit="kcal" startDate="2025-01-12 23:59:01 -0600" endDate="2025-01-12 23:59:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierStepCount"             value="7600" unit="count" startDate="2025-01-12 23:59:02 -0600" endDate="2025-01-12 23:59:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDistanceWalkingRunning" value="5.7"  unit="km"   startDate="2025-01-12 23:59:03 -0600" endDate="2025-01-12 23:59:03 -0600"/>
 
-  <!-- ---------- METRIC: BASAL ENERGY (kcal) ---------- -->
-  <!-- one sample / day – Apple normally stores many; this is enough for demo -->
-  {% for d, v in [
-      ("2025-01-07","1986"),("2025-01-08","1985"),("2025-01-09","1984"),
-      ("2025-01-10","1984"),("2025-01-11","1983"),("2025-01-12","1983"),
-      ("2025-01-13","1982") ] %}
-  <Record type="HKQuantityTypeIdentifierBasalEnergyBurned" sourceName="Watch"
-          unit="kcal" value="{{v}}"
-          creationDate="{{d}}T23:59:00-0600" startDate="{{d}}T00:00:00-0600"
-          endDate="{{d}}T23:59:59-0600"/>
-  {% endfor %}
+    <!-- =====================  Week 2  (13–19 Jan)  ===================== -->
+    <!-- Monday -->
+    <Record type="HKQuantityTypeIdentifierBodyMass"            value="88.4" unit="kg"    startDate="2025-01-13 08:00:00 -0600" endDate="2025-01-13 08:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierLeanBodyMass"        value="68.0" unit="kg"    startDate="2025-01-13 08:00:01 -0600" endDate="2025-01-13 08:00:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBodyFatPercentage"   value="0.23" unit="count" startDate="2025-01-13 08:00:02 -0600" endDate="2025-01-13 08:00:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1540" unit="kcal" startDate="2025-01-13 21:00:00 -0600" endDate="2025-01-13 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBasalEnergyBurned"     value="1984" unit="kcal" startDate="2025-01-13 23:59:00 -0600" endDate="2025-01-13 23:59:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierActiveEnergyBurned"    value="1170" unit="kcal" startDate="2025-01-13 23:59:01 -0600" endDate="2025-01-13 23:59:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierStepCount"             value="7700" unit="count" startDate="2025-01-13 23:59:02 -0600" endDate="2025-01-13 23:59:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDistanceWalkingRunning" value="5.8"  unit="km"   startDate="2025-01-13 23:59:03 -0600" endDate="2025-01-13 23:59:03 -0600"/>
 
-  <!-- ---------- METRIC: ACTIVE ENERGY (kcal) ---------- -->
-  {% for d, v in [
-      ("2025-01-07","1170"),("2025-01-08","1182"),("2025-01-09","1164"),
-      ("2025-01-10","1190"),("2025-01-11","1155"),("2025-01-12","1204"),
-      ("2025-01-13","1149") ] %}
-  <Record type="HKQuantityTypeIdentifierActiveEnergyBurned" sourceName="Watch"
-          unit="kcal" value="{{v}}"
-          creationDate="{{d}}T23:59:00-0600" startDate="{{d}}T00:00:00-0600"
-          endDate="{{d}}T23:59:59-0600"/>
-  {% endfor %}
+    <!-- Sunday -->
+    <Record type="HKQuantityTypeIdentifierBodyMass"            value="88.2" unit="kg"    startDate="2025-01-19 08:00:00 -0600" endDate="2025-01-19 08:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierLeanBodyMass"        value="67.8" unit="kg"    startDate="2025-01-19 08:00:01 -0600" endDate="2025-01-19 08:00:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBodyFatPercentage"   value="0.23" unit="count" startDate="2025-01-19 08:00:02 -0600" endDate="2025-01-19 08:00:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1525" unit="kcal" startDate="2025-01-19 21:00:00 -0600" endDate="2025-01-19 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBasalEnergyBurned"     value="1983" unit="kcal" startDate="2025-01-19 23:59:00 -0600" endDate="2025-01-19 23:59:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierActiveEnergyBurned"    value="1155" unit="kcal" startDate="2025-01-19 23:59:01 -0600" endDate="2025-01-19 23:59:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierStepCount"             value="7500" unit="count" startDate="2025-01-19 23:59:02 -0600" endDate="2025-01-19 23:59:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDistanceWalkingRunning" value="5.6"  unit="km"   startDate="2025-01-19 23:59:03 -0600" endDate="2025-01-19 23:59:03 -0600"/>
 
-  <!-- ---------- METRIC: DIETARY ENERGY (kcal) ---------- -->
-  {% for d, v in [
-      ("2025-01-07","1505"),("2025-01-08","1580"),("2025-01-09","1440"),
-      ("2025-01-10","1602"),("2025-01-11","1640"),("2025-01-12","1475"),
-      ("2025-01-13","1530") ] %}
-  <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" sourceName="MyFitnessPal"
-          unit="kcal" value="{{v}}"
-          creationDate="{{d}}T21:59:00-0600" startDate="{{d}}T00:00:00-0600"
-          endDate="{{d}}T23:59:59-0600"/>
-  {% endfor %}
+    <!-- =====================  Week 3  (20–26 Jan 2025) ===================== -->
+    <!-- Monday -->
+    <Record type="HKQuantityTypeIdentifierBodyMass"  value="88.2" unit="kg" startDate="2025-01-20 08:00:00 -0600" endDate="2025-01-20 08:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierLeanBodyMass" value="67.9" unit="kg" startDate="2025-01-20 08:00:01 -0600" endDate="2025-01-20 08:00:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBodyFatPercentage" value="0.23" unit="count" startDate="2025-01-20 08:00:02 -0600" endDate="2025-01-20 08:00:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1535" unit="kcal" startDate="2025-01-20 21:00:00 -0600" endDate="2025-01-20 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBasalEnergyBurned" value="1983" unit="kcal" startDate="2025-01-20 23:59:00 -0600" endDate="2025-01-20 23:59:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierActiveEnergyBurned" value="1165" unit="kcal" startDate="2025-01-20 23:59:01 -0600" endDate="2025-01-20 23:59:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierStepCount" value="7650" unit="count" startDate="2025-01-20 23:59:02 -0600" endDate="2025-01-20 23:59:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDistanceWalkingRunning" value="5.8" unit="km" startDate="2025-01-20 23:59:03 -0600" endDate="2025-01-20 23:59:03 -0600"/>
 
-  <!-- Apple Health export normally ends with metadata -->
-  <ExportMe />
+    <!-- Sunday -->
+    <Record type="HKQuantityTypeIdentifierBodyMass"  value="88.0" unit="kg" startDate="2025-01-26 08:00:00 -0600" endDate="2025-01-26 08:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierLeanBodyMass" value="67.7" unit="kg" startDate="2025-01-26 08:00:01 -0600" endDate="2025-01-26 08:00:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBodyFatPercentage" value="0.23" unit="count" startDate="2025-01-26 08:00:02 -0600" endDate="2025-01-26 08:00:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1530" unit="kcal" startDate="2025-01-26 21:00:00 -0600" endDate="2025-01-26 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBasalEnergyBurned" value="1982" unit="kcal" startDate="2025-01-26 23:59:00 -0600" endDate="2025-01-26 23:59:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierActiveEnergyBurned" value="1155" unit="kcal" startDate="2025-01-26 23:59:01 -0600" endDate="2025-01-26 23:59:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierStepCount" value="7550" unit="count" startDate="2025-01-26 23:59:02 -0600" endDate="2025-01-26 23:59:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDistanceWalkingRunning" value="5.7" unit="km" startDate="2025-01-26 23:59:03 -0600" endDate="2025-01-26 23:59:03 -0600"/>
+
+    <!-- =====================  Week 4  (27 Jan–02 Feb) ===================== -->
+    <!-- Monday -->
+    <Record type="HKQuantityTypeIdentifierBodyMass"  value="88.0" unit="kg" startDate="2025-01-27 08:00:00 -0600" endDate="2025-01-27 08:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierLeanBodyMass" value="67.7" unit="kg" startDate="2025-01-27 08:00:01 -0600" endDate="2025-01-27 08:00:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBodyFatPercentage" value="0.23" unit="count" startDate="2025-01-27 08:00:02 -0600" endDate="2025-01-27 08:00:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1545" unit="kcal" startDate="2025-01-27 21:00:00 -0600" endDate="2025-01-27 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBasalEnergyBurned" value="1981" unit="kcal" startDate="2025-01-27 23:59:00 -0600" endDate="2025-01-27 23:59:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierActiveEnergyBurned" value="1175" unit="kcal" startDate="2025-01-27 23:59:01 -0600" endDate="2025-01-27 23:59:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierStepCount" value="7800" unit="count" startDate="2025-01-27 23:59:02 -0600" endDate="2025-01-27 23:59:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDistanceWalkingRunning" value="6.0" unit="km" startDate="2025-01-27 23:59:03 -0600" endDate="2025-01-27 23:59:03 -0600"/>
+
+    <!-- Sunday -->
+    <Record type="HKQuantityTypeIdentifierBodyMass"  value="87.8" unit="kg" startDate="2025-02-02 08:00:00 -0600" endDate="2025-02-02 08:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierLeanBodyMass" value="67.5" unit="kg" startDate="2025-02-02 08:00:01 -0600" endDate="2025-02-02 08:00:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBodyFatPercentage" value="0.23" unit="count" startDate="2025-02-02 08:00:02 -0600" endDate="2025-02-02 08:00:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1520" unit="kcal" startDate="2025-02-02 21:00:00 -0600" endDate="2025-02-02 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBasalEnergyBurned" value="1980" unit="kcal" startDate="2025-02-02 23:59:00 -0600" endDate="2025-02-02 23:59:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierActiveEnergyBurned" value="1150" unit="kcal" startDate="2025-02-02 23:59:01 -0600" endDate="2025-02-02 23:59:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierStepCount" value="7400" unit="count" startDate="2025-02-02 23:59:02 -0600" endDate="2025-02-02 23:59:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDistanceWalkingRunning" value="5.6" unit="km" startDate="2025-02-02 23:59:03 -0600" endDate="2025-02-02 23:59:03 -0600"/>
+
+    <!-- =====================  Week 5  (03–09 Feb) ===================== -->
+    <!-- Monday -->
+    <Record type="HKQuantityTypeIdentifierBodyMass"  value="87.8" unit="kg" startDate="2025-02-03 08:00:00 -0600" endDate="2025-02-03 08:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierLeanBodyMass" value="67.5" unit="kg" startDate="2025-02-03 08:00:01 -0600" endDate="2025-02-03 08:00:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBodyFatPercentage" value="0.23" unit="count" startDate="2025-02-03 08:00:02 -0600" endDate="2025-02-03 08:00:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1555" unit="kcal" startDate="2025-02-03 21:00:00 -0600" endDate="2025-02-03 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBasalEnergyBurned" value="1979" unit="kcal" startDate="2025-02-03 23:59:00 -0600" endDate="2025-02-03 23:59:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierActiveEnergyBurned" value="1180" unit="kcal" startDate="2025-02-03 23:59:01 -0600" endDate="2025-02-03 23:59:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierStepCount" value="7900" unit="count" startDate="2025-02-03 23:59:02 -0600" endDate="2025-02-03 23:59:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDistanceWalkingRunning" value="6.1" unit="km" startDate="2025-02-03 23:59:03 -0600" endDate="2025-02-03 23:59:03 -0600"/>
+
+    <!-- Sunday -->
+    <Record type="HKQuantityTypeIdentifierBodyMass"  value="87.6" unit="kg" startDate="2025-02-09 08:00:00 -0600" endDate="2025-02-09 08:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierLeanBodyMass" value="67.3" unit="kg" startDate="2025-02-09 08:00:01 -0600" endDate="2025-02-09 08:00:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBodyFatPercentage" value="0.23" unit="count" startDate="2025-02-09 08:00:02 -0600" endDate="2025-02-09 08:00:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1535" unit="kcal" startDate="2025-02-09 21:00:00 -0600" endDate="2025-02-09 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBasalEnergyBurned" value="1978" unit="kcal" startDate="2025-02-09 23:59:00 -0600" endDate="2025-02-09 23:59:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierActiveEnergyBurned" value="1160" unit="kcal" startDate="2025-02-09 23:59:01 -0600" endDate="2025-02-09 23:59:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierStepCount" value="7600" unit="count" startDate="2025-02-09 23:59:02 -0600" endDate="2025-02-09 23:59:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDistanceWalkingRunning" value="5.9" unit="km" startDate="2025-02-09 23:59:03 -0600" endDate="2025-02-09 23:59:03 -0600"/>
+
+    <!-- =====================  Week 6  (10–16 Feb) ===================== -->
+    <!-- Monday -->
+    <Record type="HKQuantityTypeIdentifierBodyMass"  value="87.6" unit="kg" startDate="2025-02-10 08:00:00 -0600" endDate="2025-02-10 08:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierLeanBodyMass" value="67.3" unit="kg" startDate="2025-02-10 08:00:01 -0600" endDate="2025-02-10 08:00:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBodyFatPercentage" value="0.23" unit="count" startDate="2025-02-10 08:00:02 -0600" endDate="2025-02-10 08:00:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1540" unit="kcal" startDate="2025-02-10 21:00:00 -0600" endDate="2025-02-10 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBasalEnergyBurned" value="1978" unit="kcal" startDate="2025-02-10 23:59:00 -0600" endDate="2025-02-10 23:59:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierActiveEnergyBurned" value="1170" unit="kcal" startDate="2025-02-10 23:59:01 -0600" endDate="2025-02-10 23:59:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierStepCount" value="7700" unit="count" startDate="2025-02-10 23:59:02 -0600" endDate="2025-02-10 23:59:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDistanceWalkingRunning" value="5.9" unit="km" startDate="2025-02-10 23:59:03 -0600" endDate="2025-02-10 23:59:03 -0600"/>
+
+    <!-- Sunday -->
+    <Record type="HKQuantityTypeIdentifierBodyMass"  value="87.4" unit="kg" startDate="2025-02-16 08:00:00 -0600" endDate="2025-02-16 08:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierLeanBodyMass" value="67.1" unit="kg" startDate="2025-02-16 08:00:01 -0600" endDate="2025-02-16 08:00:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBodyFatPercentage" value="0.23" unit="count" startDate="2025-02-16 08:00:02 -0600" endDate="2025-02-16 08:00:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1525" unit="kcal" startDate="2025-02-16 21:00:00 -0600" endDate="2025-02-16 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBasalEnergyBurned" value="1976" unit="kcal" startDate="2025-02-16 23:59:00 -0600" endDate="2025-02-16 23:59:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierActiveEnergyBurned" value="1150" unit="kcal" startDate="2025-02-16 23:59:01 -0600" endDate="2025-02-16 23:59:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierStepCount" value="7500" unit="count" startDate="2025-02-16 23:59:02 -0600" endDate="2025-02-16 23:59:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDistanceWalkingRunning" value="5.7" unit="km" startDate="2025-02-16 23:59:03 -0600" endDate="2025-02-16 23:59:03 -0600"/>
+
+    <!-- =====================  Week 7  (17–23 Feb) ===================== -->
+    <!-- Monday -->
+    <Record type="HKQuantityTypeIdentifierBodyMass"  value="87.4" unit="kg" startDate="2025-02-17 08:00:00 -0600" endDate="2025-02-17 08:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierLeanBodyMass" value="67.1" unit="kg" startDate="2025-02-17 08:00:01 -0600" endDate="2025-02-17 08:00:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBodyFatPercentage" value="0.23" unit="count" startDate="2025-02-17 08:00:02 -0600" endDate="2025-02-17 08:00:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1530" unit="kcal" startDate="2025-02-17 21:00:00 -0600" endDate="2025-02-17 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBasalEnergyBurned" value="1976" unit="kcal" startDate="2025-02-17 23:59:00 -0600" endDate="2025-02-17 23:59:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierActiveEnergyBurned" value="1160" unit="kcal" startDate="2025-02-17 23:59:01 -0600" endDate="2025-02-17 23:59:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierStepCount" value="7650" unit="count" startDate="2025-02-17 23:59:02 -0600" endDate="2025-02-17 23:59:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDistanceWalkingRunning" value="5.8" unit="km" startDate="2025-02-17 23:59:03 -0600" endDate="2025-02-17 23:59:03 -0600"/>
+
+    <!-- Sunday -->
+    <Record type="HKQuantityTypeIdentifierBodyMass"  value="87.2" unit="kg" startDate="2025-02-23 08:00:00 -0600" endDate="2025-02-23 08:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierLeanBodyMass" value="66.9" unit="kg" startDate="2025-02-23 08:00:01 -0600" endDate="2025-02-23 08:00:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBodyFatPercentage" value="0.23" unit="count" startDate="2025-02-23 08:00:02 -0600" endDate="2025-02-23 08:00:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1515" unit="kcal" startDate="2025-02-23 21:00:00 -0600" endDate="2025-02-23 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBasalEnergyBurned" value="1975" unit="kcal" startDate="2025-02-23 23:59:00 -0600" endDate="2025-02-23 23:59:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierActiveEnergyBurned" value="1145" unit="kcal" startDate="2025-02-23 23:59:01 -0600" endDate="2025-02-23 23:59:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierStepCount" value="7450" unit="count" startDate="2025-02-23 23:59:02 -0600" endDate="2025-02-23 23:59:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDistanceWalkingRunning" value="5.6" unit="km" startDate="2025-02-23 23:59:03 -0600" endDate="2025-02-23 23:59:03 -0600"/>
+
+    <!-- =====================  Week 8  (24 Feb–02 Mar) ===================== -->
+    <!-- Monday -->
+    <Record type="HKQuantityTypeIdentifierBodyMass"  value="87.2" unit="kg" startDate="2025-02-24 08:00:00 -0600" endDate="2025-02-24 08:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierLeanBodyMass" value="66.9" unit="kg" startDate="2025-02-24 08:00:01 -0600" endDate="2025-02-24 08:00:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBodyFatPercentage" value="0.23" unit="count" startDate="2025-02-24 08:00:02 -0600" endDate="2025-02-24 08:00:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1540" unit="kcal" startDate="2025-02-24 21:00:00 -0600" endDate="2025-02-24 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBasalEnergyBurned" value="1974" unit="kcal" startDate="2025-02-24 23:59:00 -0600" endDate="2025-02-24 23:59:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierActiveEnergyBurned" value="1170" unit="kcal" startDate="2025-02-24 23:59:01 -0600" endDate="2025-02-24 23:59:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierStepCount" value="7750" unit="count" startDate="2025-02-24 23:59:02 -0600" endDate="2025-02-24 23:59:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDistanceWalkingRunning" value="5.9" unit="km" startDate="2025-02-24 23:59:03 -0600" endDate="2025-02-24 23:59:03 -0600"/>
+
+    <!-- Sunday -->
+    <Record type="HKQuantityTypeIdentifierBodyMass"  value="87.0" unit="kg" startDate="2025-03-02 08:00:00 -0600" endDate="2025-03-02 08:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierLeanBodyMass" value="66.7" unit="kg" startDate="2025-03-02 08:00:01 -0600" endDate="2025-03-02 08:00:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBodyFatPercentage" value="0.23" unit="count" startDate="2025-03-02 08:00:02 -0600" endDate="2025-03-02 08:00:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1525" unit="kcal" startDate="2025-03-02 21:00:00 -0600" endDate="2025-03-02 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierBasalEnergyBurned" value="1973" unit="kcal" startDate="2025-03-02 23:59:00 -0600" endDate="2025-03-02 23:59:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierActiveEnergyBurned" value="1150" unit="kcal" startDate="2025-03-02 23:59:01 -0600" endDate="2025-03-02 23:59:01 -0600"/>
+    <Record type="HKQuantityTypeIdentifierStepCount" value="7550" unit="count" startDate="2025-03-02 23:59:02 -0600" endDate="2025-03-02 23:59:02 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDistanceWalkingRunning" value="5.7" unit="km" startDate="2025-03-02 23:59:03 -0600" endDate="2025-03-02 23:59:03 -0600"/>
+
+    <!-- ==========  End of Week 8  ========== -->
+
+    <!-- Week 3 : extra logs (Wed 22 Jan 2025 → Fri 24 Jan) -->
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1570" unit="kcal" startDate="2025-01-22 21:00:00 -0600" endDate="2025-01-22 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1490" unit="kcal" startDate="2025-01-23 21:00:00 -0600" endDate="2025-01-23 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1510" unit="kcal" startDate="2025-01-24 21:00:00 -0600" endDate="2025-01-24 21:00:00 -0600"/>
+
+    <!-- Week 4 : Wed 29 Jan → Fri 31 Jan -->
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1585" unit="kcal" startDate="2025-01-29 21:00:00 -0600" endDate="2025-01-29 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1505" unit="kcal" startDate="2025-01-30 21:00:00 -0600" endDate="2025-01-30 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1520" unit="kcal" startDate="2025-01-31 21:00:00 -0600" endDate="2025-01-31 21:00:00 -0600"/>
+
+    <!-- Week 5 : Wed 05 Feb → Fri 07 Feb -->
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1590" unit="kcal" startDate="2025-02-05 21:00:00 -0600" endDate="2025-02-05 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1510" unit="kcal" startDate="2025-02-06 21:00:00 -0600" endDate="2025-02-06 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1530" unit="kcal" startDate="2025-02-07 21:00:00 -0600" endDate="2025-02-07 21:00:00 -0600"/>
+
+    <!-- Week 6 : Wed 12 Feb → Fri 14 Feb -->
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1560" unit="kcal" startDate="2025-02-12 21:00:00 -0600" endDate="2025-02-12 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1485" unit="kcal" startDate="2025-02-13 21:00:00 -0600" endDate="2025-02-13 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1500" unit="kcal" startDate="2025-02-14 21:00:00 -0600" endDate="2025-02-14 21:00:00 -0600"/>
+
+    <!-- Week 7 : Wed 19 Feb → Fri 21 Feb -->
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1575" unit="kcal" startDate="2025-02-19 21:00:00 -0600" endDate="2025-02-19 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1495" unit="kcal" startDate="2025-02-20 21:00:00 -0600" endDate="2025-02-20 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1515" unit="kcal" startDate="2025-02-21 21:00:00 -0600" endDate="2025-02-21 21:00:00 -0600"/>
+
+    <!-- Week 8 : Wed 26 Feb → Fri 28 Feb -->
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1580" unit="kcal" startDate="2025-02-26 21:00:00 -0600" endDate="2025-02-26 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1500" unit="kcal" startDate="2025-02-27 21:00:00 -0600" endDate="2025-02-27 21:00:00 -0600"/>
+    <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" value="1520" unit="kcal" startDate="2025-02-28 21:00:00 -0600" endDate="2025-02-28 21:00:00 -0600"/>
+
+    <!-- ⋯⋯ END food-log lines ⋯⋯ -->
 </HealthData>

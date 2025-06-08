@@ -25,6 +25,7 @@ env.bak/
 # ─────────────────────────
 # Apple-Health exports (real user data)
 *.xml
+
 !data/default.xml          # keep the demo file under version-control
 
 # CSV / TSV / Excel produced by FitAssist
