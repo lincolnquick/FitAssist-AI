@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<HealthData locale="en_US" exportDate="2025-06-08T09:00:00-0600" version="13.0">
+  <!-- ---------- METRIC: WEIGHT (kg) ---------- -->
+  <Record type="HKQuantityTypeIdentifierBodyMass"
+          sourceName="iPhone"
+          sourceVersion="17.4"
+          unit="kg"
+          creationDate="2025-01-07T07:15:00-0600"
+          startDate="2025-01-07T07:15:00-0600"
+          endDate="2025-01-07T07:15:00-0600"
+          value="88.70"/>
+  <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="iPhone" sourceVersion="17.4"
+          unit="kg" creationDate="2025-01-08T07:12:00-0600" startDate="2025-01-08T07:12:00-0600"
+          endDate="2025-01-08T07:12:00-0600" value="88.55"/>
+  <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="iPhone" sourceVersion="17.4"
+          unit="kg" creationDate="2025-01-09T07:04:00-0600" startDate="2025-01-09T07:04:00-0600"
+          endDate="2025-01-09T07:04:00-0600" value="88.50"/>
+  <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="iPhone" sourceVersion="17.4"
+          unit="kg" creationDate="2025-01-10T07:11:00-0600" startDate="2025-01-10T07:11:00-0600"
+          endDate="2025-01-10T07:11:00-0600" value="88.40"/>
+  <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="iPhone" sourceVersion="17.4"
+          unit="kg" creationDate="2025-01-11T07:14:00-0600" startDate="2025-01-11T07:14:00-0600"
+          endDate="2025-01-11T07:14:00-0600" value="88.35"/>
+  <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="iPhone" sourceVersion="17.4"
+          unit="kg" creationDate="2025-01-12T07:09:00-0600" startDate="2025-01-12T07:09:00-0600"
+          endDate="2025-01-12T07:09:00-0600" value="88.30"/>
+  <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="iPhone" sourceVersion="17.4"
+          unit="kg" creationDate="2025-01-13T07:02:00-0600" startDate="2025-01-13T07:02:00-0600"
+          endDate="2025-01-13T07:02:00-0600" value="88.25"/>
+
+  <!-- ---------- METRIC: BODY-FAT % (fraction) ---------- -->
+  <Record type="HKQuantityTypeIdentifierBodyFatPercentage" sourceName="iPhone"
+          unit="count" value="0.233" creationDate="2025-01-07T07:15:00-0600"
+          startDate="2025-01-07T07:15:00-0600" endDate="2025-01-07T07:15:00-0600"/>
+  <Record type="HKQuantityTypeIdentifierBodyFatPercentage" sourceName="iPhone"
+          unit="count" value="0.232" creationDate="2025-01-10T07:11:00-0600"
+          startDate="2025-01-10T07:11:00-0600" endDate="2025-01-10T07:11:00-0600"/>
+
+  <!-- ---------- METRIC: BASAL ENERGY (kcal) ---------- -->
+  <!-- one sample / day – Apple normally stores many; this is enough for demo -->
+  {% for d, v in [
+      ("2025-01-07","1986"),("2025-01-08","1985"),("2025-01-09","1984"),
+      ("2025-01-10","1984"),("2025-01-11","1983"),("2025-01-12","1983"),
+      ("2025-01-13","1982") ] %}
+  <Record type="HKQuantityTypeIdentifierBasalEnergyBurned" sourceName="Watch"
+          unit="kcal" value="{{v}}"
+          creationDate="{{d}}T23:59:00-0600" startDate="{{d}}T00:00:00-0600"
+          endDate="{{d}}T23:59:59-0600"/>
+  {% endfor %}
+
+  <!-- ---------- METRIC: ACTIVE ENERGY (kcal) ---------- -->
+  {% for d, v in [
+      ("2025-01-07","1170"),("2025-01-08","1182"),("2025-01-09","1164"),
+      ("2025-01-10","1190"),("2025-01-11","1155"),("2025-01-12","1204"),
+      ("2025-01-13","1149") ] %}
+  <Record type="HKQuantityTypeIdentifierActiveEnergyBurned" sourceName="Watch"
+          unit="kcal" value="{{v}}"
+          creationDate="{{d}}T23:59:00-0600" startDate="{{d}}T00:00:00-0600"
+          endDate="{{d}}T23:59:59-0600"/>
+  {% endfor %}
+
+  <!-- ---------- METRIC: DIETARY ENERGY (kcal) ---------- -->
+  {% for d, v in [
+      ("2025-01-07","1505"),("2025-01-08","1580"),("2025-01-09","1440"),
+      ("2025-01-10","1602"),("2025-01-11","1640"),("2025-01-12","1475"),
+      ("2025-01-13","1530") ] %}
+  <Record type="HKQuantityTypeIdentifierDietaryEnergyConsumed" sourceName="MyFitnessPal"
+          unit="kcal" value="{{v}}"
+          creationDate="{{d}}T21:59:00-0600" startDate="{{d}}T00:00:00-0600"
+          endDate="{{d}}T23:59:59-0600"/>
+  {% endfor %}
+
+  <!-- Apple Health export normally ends with metadata -->
+  <ExportMe />
+</HealthData>
